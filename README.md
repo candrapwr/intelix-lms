@@ -5,14 +5,15 @@ INTELIX adalah platform pembelajaran intelijen terpadu yang menyatukan API backe
 ---
 
 ## 0. Fitur Unggulan
-- Skema data lengkap untuk Course, Module, Lesson, Enrollment, Assignment, Submission, dan Category guna menampung materi operasi intelijen, simulasi lapangan, dan analisis strategis.
+- Skema data lengkap untuk Course, Section, Module, Lesson, Enrollment, Assignment, Submission, dan Category guna menampung materi operasi intelijen, simulasi lapangan, dan analisis strategis.
 - Role management (`admin` sebagai command center, `instructor` sebagai field coach, `student` sebagai trainee) dengan dukungan soft delete dan profil JSON untuk rekam kompetensi.
 - API REST `/api/admin` menghadirkan kendali penuh atas dashboard, kursus, dan personel pelatihan intelijen, siap diproteksi autentikasi tingkat tinggi.
 - Admin SPA modern: sidebar responsif, search bar, tema glassmorphism, dan navigasi profesional layaknya mission control deck.
-- Portal login modern dengan pemilihan peran (`admin`, `instructor`, `student`) serta dashboard khusus yang menyajikan KPI operasional masing-masing peran.
+- Portal login modern memakai kredensial asli (email + password) dan otomatis mengarahkan pengguna ke dashboard sesuai rolenya (`admin`, `instructor`, `student`).
 - CRUD interaktif dengan modal, validasi dasar, filter pencarian, pagination, serta toast notifikasi real-time untuk memastikan update misi instan.
 - Master data Unit & Sub Unit untuk mengelompokkan detasemen, task force, dan tim analisis lintas divisi.
 - Master data Klasifikasi Kursus untuk mengelompokkan jalur pelatihan (dasar, lanjutan, spesialis) secara terstruktur.
+- Section builder per kursus dengan materi terlampir (PDF, video, dokumen) yang tersimpan terurut dan siap diunduh peserta.
 - Penetapan status training gratis secara default sembari membuka peluang integrasi skema insentif atau clearance level ke depan.
 - Seeder contoh menyiapkan administrator, pelatih intelijen, serta trainee dummy untuk kickstart demo taktis.
 
@@ -71,7 +72,9 @@ php artisan migrate --seed
 Seeder akan membuat:
 - 1 akun admin (email dari `APP_ADMIN_EMAIL`, password default `password`).
 - 3 instruktur dummy dengan profil expertise.
-- 5 siswa dummy.
+- 5 siswa dummy acak.
+- 1 siswa demo (`student@intelix.local`, password `password`).
+- 1 kursus demo **Operasi Kontra Intelijen** beserta section dan materi contoh untuk pengujian frontend.
 
 ## 6. Menjalankan Aplikasi
 ### Backend API
@@ -100,13 +103,22 @@ app/
     Controllers/
       Admin/
         CourseController.php
+        CourseMaterialController.php
+        CourseSectionController.php
         DashboardController.php
         InstructorController.php
         StudentController.php
+      Student/
+        StudentCourseController.php
+      AuthController.php
     Requests/
       Admin/
         StoreCourseRequest.php
         UpdateCourseRequest.php
+        StoreCourseSectionRequest.php
+        UpdateCourseSectionRequest.php
+        StoreCourseMaterialRequest.php
+        UpdateCourseMaterialRequest.php
         StoreStudentRequest.php
         UpdateStudentRequest.php
         StoreInstructorRequest.php
@@ -114,10 +126,15 @@ app/
     Resources/
       CourseResource.php
       UserResource.php
+      Student/
+        StudentCourseDetailResource.php
+        StudentCourseResource.php
   Models/
     Assignment.php
     Category.php
     Course.php
+    CourseMaterial.php
+    CourseSection.php
     Enrollment.php
     Lesson.php
     Module.php
@@ -137,6 +154,7 @@ database/
 resources/
   js/admin/
     api/client.js            # Axios instance /api/admin
+    api/studentClient.js     # Axios instance /api/student (token-based)
     components/
       Layout.jsx
       StudentLayout.jsx
@@ -152,6 +170,7 @@ resources/
     pages/
       DashboardPage.jsx
       CourseListPage.jsx
+      CourseSectionsPage.jsx
       CourseClassificationPage.jsx
       StudentListPage.jsx
       InstructorListPage.jsx
@@ -182,13 +201,13 @@ vite.config.js               # Konfigurasi Vite (Laravel, Tailwind, React)
 package.json
 ```
 
-## 8. Arsitektur API Admin
-- Prefix route: `/api/admin` (lihat `routes/api.php`).
-- Middleware default `api` (siap ditambah auth seperti Sanctum).
-- Controller Pattern: perform query + resource transform.
+## 8. Arsitektur API
+- Prefix route admin: `/api/admin` (lihat `routes/api.php`).
+- Prefix route student: `/api/student` dengan middleware token ringan (`auth.token`).
+- Endpoint autentikasi tersedia di `/api/auth/*` (login, logout, me).
 - Filtering & pagination lewat query string (`status`, `category_id`, `level`, `search`).
 
-### Endpoint Awal
+### Admin
 | Method | Endpoint | Controller | Catatan |
 | --- | --- | --- | --- |
 | GET | `/api/admin/dashboard/metrics` | `DashboardController@metrics` | Ringkasan total siswa, instruktur, kursus, completion rate |
@@ -208,11 +227,26 @@ package.json
 
 Respons standar menggunakan `CourseResource` & `UserResource` untuk menjaga kontrak JSON.
 
+### Autentikasi
+| Method | Endpoint | Controller | Catatan |
+| --- | --- | --- | --- |
+| POST | `/api/auth/login` | `AuthController@login` | Verifikasi email + password, menghasilkan token `Bearer` |
+| POST | `/api/auth/logout` | `AuthController@logout` | Membatalkan token aktif (wajib header Authorization) |
+| GET | `/api/auth/me` | `AuthController@me` | Mengembalikan profil singkat dari token aktif |
+
+### Student
+| Method | Endpoint | Controller | Catatan |
+| --- | --- | --- | --- |
+| GET | `/api/student/courses` | `StudentCourseController@index` | Daftar kursus publik beserta status enrolment pengguna |
+| POST | `/api/student/courses/{slug}/enroll` | `StudentCourseController@enroll` | Enroll kursus (idempotent; tolak jika sudah terdaftar) |
+| GET | `/api/student/my-courses` | `StudentCourseController@myCourses` | Kursus yang diikuti lengkap dengan progres singkat |
+| GET | `/api/student/my-courses/{slug}` | `StudentCourseController@showMyCourse` | Detail kursus + section & materi; update `last_accessed_at` |
+
 ## 9. SPA Admin & Portal Pengguna
 - Entry React: `resources/js/admin/main.jsx` dengan `BrowserRouter basename="/admin"` dan provider `NotificationContext` + `AuthContext`.
-- Autentikasi frontend dummy via `context/AuthContext.jsx` (localStorage). Integrasikan dengan Sanctum/Breeze untuk produksi.
+- Autentikasi frontend memakai token ringan via endpoint `/api/auth/login`, disimpan di localStorage melalui `context/AuthContext.jsx`. Integrasi dengan Sanctum/Breeze tetap disarankan untuk produksi.
 - Layout admin: `components/Layout.jsx` menyediakan navigasi, pencarian, badge user, dan tombol logout.
-- Portal student (`components/StudentLayout.jsx`) & instructor (`components/InstructorLayout.jsx`) menghadirkan menu khusus dengan halaman demo di `pages/student/*` dan `pages/instructor/*`.
+- Portal student (`components/StudentLayout.jsx`) kini menampilkan katalog kursus yang bisa langsung di-enroll, daftar kursus yang sudah diikuti lengkap dengan section & materi, sementara portal instruktur (`components/InstructorLayout.jsx`) siap dikembangkan.
 - Menu Master Data kini memisahkan Unit, Sub Unit, dan Course Classification di sidebar admin untuk navigasi yang lebih rapi.
 - Halaman admin aktif mencakup Dashboard, Kursus, Siswa, Instruktur, Units, dan Sub Units yang terhubung langsung ke API.
 - Tambahkan state management (Context/Redux/React Query) jika beban data semakin kompleks atau data real-time.

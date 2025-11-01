@@ -151,7 +151,7 @@ export default function CourseClassificationPage() {
         <div className="surface">
             <div className="surface-header">
                 <div>
-                    <div className="surface-title">Master Unit</div>
+                    <div className="surface-title">Klasifikasi Kursus</div>
                     <div className="surface-subtitle">
                         Kelola klasifikasi kursus untuk mengelompokkan tingkat operasi, spesialisasi,
                         dan jalur pelatihan intelijen.
@@ -234,7 +234,7 @@ export default function CourseClassificationPage() {
 
             <Modal
                 title={editingClassification ? 'Edit Klasifikasi' : 'Tambah Klasifikasi'}
-                isOpen={modalOpen}
+                open={modalOpen}
                 onClose={handleCloseModal}
                 footer={
                     <>

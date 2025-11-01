@@ -48,6 +48,11 @@ class Course extends Model
         return $this->belongsTo(CourseClassification::class, 'classification_id');
     }
 
+    public function sections(): HasMany
+    {
+        return $this->hasMany(CourseSection::class)->orderBy('sort_order')->orderBy('created_at');
+    }
+
     public function modules(): HasMany
     {
         return $this->hasMany(Module::class)->orderBy('sort_order');

@@ -3,19 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './login.css';
 
-const roleOptions = [
-    { value: 'admin', label: 'Command Lead', description: 'Full system control & analytics' },
-    { value: 'instructor', label: 'Field Coach', description: 'Course management & training' },
-    { value: 'student', label: 'Operative Trainee', description: 'Learning & mission progress' },
-];
-
 export default function LoginPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { login, isAuthenticated, user } = useAuth();
 
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState('admin');
+    const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
@@ -31,16 +25,17 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            if (!email) {
-                throw new Error('Please enter your email address.');
+            if (!email || !password) {
+                throw new Error('Mohon masukkan email dan kata sandi.');
             }
 
-            login({ email, role });
-
-            const redirectTo = location.state?.from?.pathname ?? getDefaultDestination(role);
+            const authenticatedUser = await login({ email, password });
+            const redirectTo =
+                location.state?.from?.pathname ?? getDefaultDestination(authenticatedUser?.role);
             navigate(redirectTo, { replace: true });
         } catch (submitError) {
-            setError(submitError.message ?? 'Unable to log in, please try again.');
+            const message = submitError?.response?.data?.message ?? submitError?.message;
+            setError(message ?? 'Unable to log in, please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -78,25 +73,15 @@ export default function LoginPage() {
                     </label>
 
                     <label className="form-field">
-                        <span>Access Role</span>
-                        <div className="role-selector">
-                            {roleOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type="button"
-                                    className={`role-option${role === option.value ? ' active' : ''}`}
-                                    onClick={() => setRole(option.value)}
-                                >
-                                    <div style={{ textAlign: 'left' }}>
-                                        <div className="option-label">{option.label}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.1rem' }}>
-                                            {option.description}
-                                        </div>
-                                    </div>
-                                    <span className="option-pill">{option.value}</span>
-                                </button>
-                            ))}
-                        </div>
+                        <span>Password</span>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            autoComplete="current-password"
+                            required
+                        />
                     </label>
 
                     {error ? <div className="auth-error">{error}</div> : null}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import client from '../api/client';
 import { useNotification } from '../context/NotificationContext';
@@ -25,6 +26,14 @@ const PreviewIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" strokeLinejoin="round" />
         <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const SectionIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <path d="M4 4h16v4H4z" />
+        <path d="M4 10h10v4H4z" />
+        <path d="M4 16h16v4H4z" />
     </svg>
 );
 
@@ -94,6 +103,7 @@ export default function CourseListPage() {
     const [form, setForm] = useState(emptyCourse);
     const [editingCourse, setEditingCourse] = useState(null);
 
+    const navigate = useNavigate();
     const { pushError, pushSuccess } = useNotification();
 
     useEffect(() => {
@@ -204,6 +214,13 @@ export default function CourseListPage() {
         try {
             const response = await client.get(`/courses/${course.slug}`);
             const detail = response.data.data ?? response.data;
+            const sectionCount = detail.sections?.length ?? 0;
+            const materialCount = Array.isArray(detail.sections)
+                ? detail.sections.reduce(
+                      (total, section) => total + (section.materials?.length ?? 0),
+                      0,
+                  )
+                : 0;
 
             Swal.fire({
                 title: detail.title,
@@ -213,7 +230,8 @@ export default function CourseListPage() {
                         <div><strong>Klasifikasi:</strong> ${escapeHtml(detail.classification?.name ?? '-')}</div>
                         <div><strong>Ringkasan:</strong><br>${escapeHtml(detail.short_description ?? 'Belum ada ringkasan.')}</div>
                         <div><strong>Deskripsi:</strong><br>${escapeHtml(detail.description ?? 'Belum ada deskripsi.')}</div>
-                        <div><strong>Jumlah Modul:</strong> ${detail.modules?.length ?? '-'}</div>
+                        <div><strong>Jumlah Section:</strong> ${sectionCount}</div>
+                        <div><strong>Jumlah Materi:</strong> ${materialCount}</div>
                         <div><strong>Enrollments:</strong> ${detail.stats?.enrollments ?? 0}</div>
                     </div>
                 `,
@@ -223,6 +241,10 @@ export default function CourseListPage() {
         } catch (error) {
             pushError('Gagal memuat detail kursus', error.response?.data?.message ?? error.message);
         }
+    };
+
+    const handleManageSections = (course) => {
+        navigate(`/courses/${course.slug}/sections`);
     };
 
     const handleDelete = async (course) => {
@@ -375,6 +397,14 @@ export default function CourseListPage() {
                                         <td>{course.stats?.enrollments ?? 0}</td>
                                         <td>
                                             <div className="table-actions">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-ghost btn-icon"
+                                                    onClick={() => handleManageSections(course)}
+                                                    title="Kelola section"
+                                                >
+                                                    <SectionIcon />
+                                                </button>
                                                 <button
                                                     type="button"
                                                     className="btn btn-ghost btn-icon"

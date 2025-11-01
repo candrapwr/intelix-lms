@@ -51,7 +51,14 @@ class CourseController extends Controller
 
     public function show(Course $course): CourseResource
     {
-        $course->load(['category', 'instructor', 'classification', 'modules.lessons', 'students'])
+        $course->load([
+            'category',
+            'instructor',
+            'classification',
+            'sections.materials',
+            'modules.lessons',
+            'students',
+        ])
             ->loadCount(['enrollments', 'students']);
 
         return new CourseResource($course);

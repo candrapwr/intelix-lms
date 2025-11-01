@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CourseListPage from './pages/CourseListPage';
+import CourseSectionsPage from './pages/CourseSectionsPage';
 import CourseClassificationPage from './pages/CourseClassificationPage';
 import StudentListPage from './pages/StudentListPage';
 import InstructorListPage from './pages/InstructorListPage';
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/" element={<AdminLayout />}>
                     <Route index element={<DashboardPage />} />
                     <Route path="courses" element={<CourseListPage />} />
+                    <Route path="courses/:slug/sections" element={<CourseSectionsPage />} />
                     <Route path="course-classifications" element={<CourseClassificationPage />} />
                     <Route path="students" element={<StudentListPage />} />
                     <Route path="instructors" element={<InstructorListPage />} />
