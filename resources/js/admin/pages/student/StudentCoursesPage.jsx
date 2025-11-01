@@ -21,6 +21,17 @@ function sanitizeHtml(value) {
         .replace(/on[a-z]+='[^']*'/gi, '');
 }
 
+function getCategoryColor(category) {
+    const colors = {
+        'Operasi': 'var(--category-operasi)',
+        'Analisis': 'var(--category-analisis)', 
+        'Teknis': 'var(--category-teknis)',
+        'Strategi': 'var(--category-strategi)',
+        'Umum': 'var(--category-umum)'
+    };
+    return colors[category] || colors['Umum'];
+}
+
 export default function StudentCoursesPage() {
     const { pushError } = useNotification();
 
@@ -86,94 +97,126 @@ export default function StudentCoursesPage() {
     }, [selectedCourse]);
 
     return (
-        <div className="student-page">
-            <section className="section-header">
-                <div>
-                    <h1>Kursus Saya</h1>
-                    <p>Kelola misi belajar yang sudah Anda ikuti dan akses materi tiap section.</p>
+        <div className="student-dashboard-compact">
+            <section className="dashboard-hero-compact">
+                <div className="hero-content-compact">
+                    <div className="hero-text-compact">
+                        <h1 className="hero-title-compact">Kursus Saya</h1>
+                        <p className="hero-subtitle-compact">
+                            Kelola misi belajar yang sudah Anda ikuti dan akses materi tiap section
+                        </p>
+                    </div>
+                    <div className="hero-stats-compact">
+                        <div className="stat-card-compact">
+                            <div className="stat-value-compact">{courses.length}</div>
+                            <div className="stat-label-compact">Kursus</div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <div className="my-course-layout">
-                <div className="my-course-list">
+            <div className="my-course-layout-compact">
+                <div className="my-course-list-compact">
                     {loading ? (
-                        <div className="empty-state">
-                            <h2>Memuat kursus...</h2>
-                            <p>Menyiapkan daftar kursus yang sedang Anda ikuti.</p>
+                        <div className="loading-state-compact">
+                            <div className="loading-spinner medium"></div>
+                            <h3>Memuat kursus...</h3>
                         </div>
                     ) : courses.length === 0 ? (
-                        <div className="empty-state">
-                            <h2>Belum ada kursus yang diikuti</h2>
+                        <div className="empty-state-compact">
+                            <div className="empty-icon">📚</div>
+                            <h3>Belum ada kursus yang diikuti</h3>
                             <p>Pergi ke dashboard untuk memilih dan mendaftar kursus baru.</p>
                         </div>
                     ) : (
-                        <ul>
+                        <div className="course-list-compact">
                             {courses.map((course) => {
                                 const isActive = selectedCourse?.slug === course.slug;
                                 const progress = course.enrollment?.progress_percentage ?? 0;
 
                                 return (
-                                    <li key={course.id}>
-                                        <button
-                                            type="button"
-                                            className={`my-course-item${isActive ? ' active' : ''}`}
-                                            onClick={() => fetchCourseDetail(course.slug)}
-                                        >
-                                            <div className="item-heading">
-                                                <span className="badge accent">
-                                                    {course.classification?.name ?? 'Umum'}
+                                    <button
+                                        key={course.id}
+                                        type="button"
+                                        className={`course-item-compact${isActive ? ' active' : ''}`}
+                                        onClick={() => fetchCourseDetail(course.slug)}
+                                    >
+                                        <div className="course-item-header">
+                                            <div 
+                                                className="course-category-badge"
+                                                style={{ 
+                                                    backgroundColor: getCategoryColor(course.classification?.name)
+                                                }}
+                                            >
+                                                {course.classification?.name ?? 'Umum'}
+                                            </div>
+                                            <div className="progress-indicator">
+                                                <span className="progress-badge">{progress}%</span>
+                                            </div>
+                                        </div>
+                                        <h4 className="course-item-title">{course.title}</h4>
+                                        <p className="course-item-description">
+                                            {course.short_description ?? 'Belum ada ringkasan kursus.'}
+                                        </p>
+                                        <div className="course-item-footer">
+                                            {course.enrollment?.last_accessed_at ? (
+                                                <span className="last-access">
+                                                    Akses terakhir {formatDateTime(course.enrollment.last_accessed_at)}
                                                 </span>
-                                                <strong>{course.title}</strong>
-                                            </div>
-                                            <p>{course.short_description ?? 'Belum ada ringkasan kursus.'}</p>
-                                            <div className="item-footer">
-                                                <span>{progress}% progres</span>
-                                                {course.enrollment?.last_accessed_at ? (
-                                                    <span>
-                                                        Akses terakhir {formatDateTime(course.enrollment.last_accessed_at)}
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        </button>
-                                    </li>
+                                            ) : null}
+                                        </div>
+                                    </button>
                                 );
                             })}
-                        </ul>
+                        </div>
                     )}
                 </div>
 
-                <div className="my-course-detail">
+                <div className="my-course-detail-compact">
                     {detailLoading ? (
-                        <div className="empty-state">
-                            <h2>Memuat materi...</h2>
-                            <p>Menyiapkan struktur section dan materi kursus.</p>
+                        <div className="loading-state-compact">
+                            <div className="loading-spinner medium"></div>
+                            <h3>Memuat materi...</h3>
                         </div>
                     ) : !selectedCourse ? (
-                        <div className="empty-state">
-                            <h2>Pilih kursus</h2>
+                        <div className="empty-state-compact">
+                            <div className="empty-icon">🎯</div>
+                            <h3>Pilih kursus</h3>
                             <p>Pilih salah satu kursus di sisi kiri untuk melihat detail materinya.</p>
                         </div>
                     ) : (
-                        <div className="course-detail-card">
+                        <div className="course-detail-card-compact">
                             <header>
-                                <div>
-                                    <span className="badge primary">
+                                <div className="detail-header-main">
+                                    <div 
+                                        className="course-category-badge"
+                                        style={{ 
+                                            backgroundColor: getCategoryColor(selectedCourse.classification?.name)
+                                        }}
+                                    >
                                         {selectedCourse.classification?.name ?? 'Umum'}
-                                    </span>
-                                    <h2>{selectedCourse.title}</h2>
+                                    </div>
+                                    <h2 className="detail-title">{selectedCourse.title}</h2>
                                 </div>
-                                <div className="detail-stats">
-                                    <span>{selectedCourse.sections?.length ?? 0} section</span>
-                                    <span>{materialsTotal} materi</span>
+                                <div className="detail-stats-compact">
+                                    <div className="stat-item">
+                                        <span className="stat-icon">📚</span>
+                                        <span>{selectedCourse.sections?.length ?? 0} section</span>
+                                    </div>
+                                    <div className="stat-item">
+                                        <span className="stat-icon">📄</span>
+                                        <span>{materialsTotal} materi</span>
+                                    </div>
                                     {selectedCourse.enrollment?.enrolled_at ? (
-                                        <span>
-                                            Bergabung {formatDateTime(selectedCourse.enrollment.enrolled_at)}
-                                        </span>
+                                        <div className="stat-item">
+                                            <span className="stat-icon">📅</span>
+                                            <span>Bergabung {formatDateTime(selectedCourse.enrollment.enrolled_at)}</span>
+                                        </div>
                                     ) : null}
                                 </div>
                             </header>
                             <div
-                                className="detail-description"
+                                className="detail-description-compact"
                                 dangerouslySetInnerHTML={{
                                     __html:
                                         sanitizeHtml(selectedCourse.description) ||
@@ -182,25 +225,25 @@ export default function StudentCoursesPage() {
                             />
 
                             {selectedCourse.sections?.length ? (
-                                <div className="section-list">
+                                <div className="section-list-compact">
                                     {selectedCourse.sections.map((section) => (
-                                        <div key={section.id} className="section-card">
-                                            <div className="section-header-row">
+                                        <div key={section.id} className="section-card-compact">
+                                            <div className="section-header-compact">
                                                 <div>
-                                                    <h3>{section.title}</h3>
-                                                    <p>{section.summary ?? 'Belum ada ringkasan section.'}</p>
+                                                    <h3 className="section-title">{section.title}</h3>
+                                                    <p className="section-summary">{section.summary ?? 'Belum ada ringkasan section.'}</p>
                                                 </div>
                                                 {section.sort_order !== null && section.sort_order !== undefined ? (
-                                                    <span className="badge soft">Urutan {section.sort_order}</span>
+                                                    <span className="order-badge">Urutan {section.sort_order}</span>
                                                 ) : null}
                                             </div>
                                             {section.materials?.length ? (
-                                                <ul className="material-list">
+                                                <ul className="material-list-compact">
                                                     {section.materials.map((material) => (
-                                                        <li key={material.id}>
-                                                            <div>
-                                                                <strong>{material.title ?? material.file_name}</strong>
-                                                                <p>
+                                                        <li key={material.id} className="material-item-compact">
+                                                            <div className="material-content">
+                                                                <strong className="material-title">{material.title ?? material.file_name}</strong>
+                                                                <p className="material-description">
                                                                     {material.description ??
                                                                         'Belum ada deskripsi materi.'}
                                                                 </p>
@@ -210,7 +253,9 @@ export default function StudentCoursesPage() {
                                                                     href={material.file_url}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
+                                                                    className="download-button compact"
                                                                 >
+                                                                    <span className="button-icon">📥</span>
                                                                     Unduh
                                                                 </a>
                                                             ) : null}
@@ -218,13 +263,14 @@ export default function StudentCoursesPage() {
                                                     ))}
                                                 </ul>
                                             ) : (
-                                                <div className="empty-material">Belum ada materi.</div>
+                                                <div className="empty-material-compact">Belum ada materi.</div>
                                             )}
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="empty-state">
+                                <div className="empty-state-compact">
+                                    <div className="empty-icon">📚</div>
                                     <h3>Belum ada section</h3>
                                     <p>Kursus ini belum memiliki section yang dapat diakses.</p>
                                 </div>
