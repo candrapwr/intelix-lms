@@ -3,10 +3,10 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './layout.css';
 
-const instructorNavLinks = [
-    { to: '/instructor', label: 'Command Brief', icon: 'dashboard', end: true },
-    { to: '/instructor/courses', label: 'Mission Deck', icon: 'courses' },
-    { to: '/instructor/students', label: 'Operatives', icon: 'students' },
+const navigation = [
+    { type: 'item', to: '.', label: 'Dashboard', icon: 'dashboard', end: true },
+    { type: 'item', to: 'courses', label: 'Courses', icon: 'courses' },
+    { type: 'item', to: 'students', label: 'Students', icon: 'students' },
 ];
 
 const icons = {
@@ -37,6 +37,12 @@ const icons = {
             <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
         </svg>
     ),
+    search: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m20 20-3.35-3.35" strokeLinecap="round" />
+        </svg>
+    ),
     close: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
             <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
@@ -45,7 +51,7 @@ const icons = {
 };
 
 function Icon({ name }) {
-    return <span className="icon">{icons[name]}</span>;
+    return <span className="icon">{icons[name] ?? null}</span>;
 }
 
 export default function InstructorLayout() {
@@ -53,18 +59,42 @@ export default function InstructorLayout() {
     const { user, logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
+    const resolvePath = (target) => (target === '.' ? '/instructor' : `/instructor/${target}`);
+    const isRouteActive = (target) => {
+        const resolved = resolvePath(target);
+
+        if (target === '.') {
+            return location.pathname === resolved || location.pathname === `${resolved}/`;
+        }
+
+        return location.pathname === resolved;
+    };
+
     useEffect(() => {
         setSidebarOpen(false);
     }, [location.pathname]);
 
+    const flatNavigation = useMemo(() => {
+        const items = [];
+        navigation.forEach((item) => {
+            if (item.type === 'item') {
+                items.push(item);
+            } else if (item.children) {
+                items.push(...item.children);
+            }
+        });
+        return items;
+    }, []);
+
     const pageTitle = useMemo(() => {
-        const current = instructorNavLinks.find((item) => location.pathname === item.to);
+        const current = flatNavigation.find((item) => isRouteActive(item.to));
+
         return current?.label ?? 'Field Command';
-    }, [location.pathname]);
+    }, [flatNavigation, location.pathname]);
 
     return (
-        <div className={`admin-shell instructor-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
-            <aside className="admin-sidebar instructor-sidebar">
+        <div className={`admin-shell ${sidebarOpen ? 'sidebar-open' : ''}`}>
+            <aside className="admin-sidebar">
                 <div className="sidebar-header">
                     <div className="brand">
                         <div className="brand-badge">IX</div>
@@ -81,17 +111,17 @@ export default function InstructorLayout() {
                 </div>
                 <nav className="sidebar-nav">
                     <ul>
-                        {instructorNavLinks.map((link) => (
-                            <li key={link.to}>
+                        {navigation.map((item) => (
+                            <li key={item.to}>
                                 <NavLink
-                                    to={link.to}
-                                    end={link.end}
+                                    to={item.to}
+                                    end={item.end}
                                     className={({ isActive }) =>
-                                        `sidebar-link${isActive ? ' active' : ''}`
+                                        `sidebar-link${isRouteActive(item.to) || isActive ? ' active' : ''}`
                                     }
                                 >
-                                    <Icon name={link.icon} />
-                                    {link.label}
+                                    <Icon name={item.icon} />
+                                    {item.label}
                                 </NavLink>
                             </li>
                         ))}
@@ -107,8 +137,8 @@ export default function InstructorLayout() {
                 className="sidebar-overlay"
                 onClick={() => setSidebarOpen(false)}
             />
-            <div className="admin-main instructor-main">
-                <header className="admin-topbar instructor-topbar">
+            <div className="admin-main">
+                <header className="admin-topbar">
                     <div className="topbar-left">
                         <button
                             type="button"
@@ -118,22 +148,15 @@ export default function InstructorLayout() {
                         >
                             {icons.menu}
                         </button>
-                        <div className="page-title">{pageTitle}</div>
+                        <span className="page-title">{pageTitle}</span>
                     </div>
-                    <div className="topbar-right">
-                        <div className="user-pill">
-                            <div className="user-avatar">{user?.initials ?? 'FC'}</div>
-                            <div>
-                                <div style={{ fontWeight: 600, color: '#0f172a' }}>
-                                    {user?.name ?? 'Field Coach'}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                    {user?.email ?? 'coach@intelix.local'}
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" className="logout-button" onClick={logout}>
-                            Sign out
+                    <div className="topbar-profile">
+                        <button type="button" className="profile-button" onClick={logout}>
+                            <span className="profile-avatar">{user?.initials ?? 'FC'}</span>
+                            <span className="profile-meta">
+                                <span className="profile-name">{user?.name ?? 'Field Coach'}</span>
+                                <span className="profile-action">Sign out</span>
+                            </span>
                         </button>
                     </div>
                 </header>

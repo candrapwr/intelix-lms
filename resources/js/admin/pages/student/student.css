@@ -374,6 +374,33 @@
     color: #64748b;
 }
 
+.under-development-section {
+    background: rgba(248, 250, 252, 0.95);
+    border-radius: 1.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 3rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.under-development-section h2 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    color: #0f172a;
+}
+
+.under-development-section p {
+    margin: 0;
+    color: #64748b;
+    font-size: 1rem;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
 @media (max-width: 720px) {
     .hero-banner {
         flex-direction: column;

@@ -4,9 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import './login.css';
 
 const roleOptions = [
-    { value: 'admin', label: 'Command Lead' },
-    { value: 'instructor', label: 'Field Coach' },
-    { value: 'student', label: 'Operative Trainee' },
+    { value: 'admin', label: 'Command Lead', description: 'Full system control & analytics' },
+    { value: 'instructor', label: 'Field Coach', description: 'Course management & training' },
+    { value: 'student', label: 'Operative Trainee', description: 'Learning & mission progress' },
 ];
 
 export default function LoginPage() {
@@ -53,21 +53,23 @@ export default function LoginPage() {
                 <div className="auth-card__brand">
                     <span className="badge">IX</span>
                     <div>
-                        <strong>INTELIX Access Gate</strong>
-                        <p>Portal resmi pelatihan intelijen digital bagi command lead, field coach, dan operative.</p>
+                        <strong>INTELIX LMS</strong>
+                        <p>Intelligent Learning Management System for tactical training operations.</p>
                     </div>
                 </div>
                 <form className="auth-form" onSubmit={handleSubmit}>
-                    <h1>Secure access granted</h1>
-                    <p className="subtitle">
-                        Masuk menggunakan kredensial dan peran Anda untuk melanjutkan sesi latihan intelijen.
-                    </p>
+                    <div>
+                        <h1>Welcome Back</h1>
+                        <p className="subtitle">
+                            Sign in to your account to continue your training operations.
+                        </p>
+                    </div>
 
                     <label className="form-field">
-                        <span>Email</span>
+                        <span>Email Address</span>
                         <input
                             type="email"
-                            placeholder="agent@intelix.local"
+                            placeholder="your.email@intelix.local"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             autoComplete="email"
@@ -76,7 +78,7 @@ export default function LoginPage() {
                     </label>
 
                     <label className="form-field">
-                        <span>Login as</span>
+                        <span>Access Role</span>
                         <div className="role-selector">
                             {roleOptions.map((option) => (
                                 <button
@@ -85,7 +87,12 @@ export default function LoginPage() {
                                     className={`role-option${role === option.value ? ' active' : ''}`}
                                     onClick={() => setRole(option.value)}
                                 >
-                                    <span className="option-label">{option.label}</span>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div className="option-label">{option.label}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.1rem' }}>
+                                            {option.description}
+                                        </div>
+                                    </div>
                                     <span className="option-pill">{option.value}</span>
                                 </button>
                             ))}
@@ -95,26 +102,26 @@ export default function LoginPage() {
                     {error ? <div className="auth-error">{error}</div> : null}
 
                     <button type="submit" className="auth-submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Authorizing...' : 'Initiate session'}
+                        {isSubmitting ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
                 <div className="auth-footer">
-                    <span>Need clearance?</span>
-                    <a href="mailto:command@intelix.local">Hubungi INTELIX Command</a>
+                    <span>Need assistance?</span>
+                    <a href="mailto:support@intelix.local">Contact Support</a>
                 </div>
             </div>
             <div className="auth-showcase">
                 <div className="showcase-overlay" />
                 <div className="showcase-content">
-                    <h2>Asah ketajaman intelijen</h2>
+                    <h2>Advanced Training Platform</h2>
                     <p>
-                        Pantau kesiapan agen, rilis modul operasi, dan kawal simulasi misi dalam satu dek komando
-                        modern. Berganti peran secara instan dan tetap selaras dengan taktik tim Anda.
+                        Experience the next generation of intelligent learning management designed for modern tactical operations and professional development.
                     </p>
                     <ul>
-                        <li>Dashboard berbasis peran dengan KPI operasional</li>
-                        <li>Notifikasi real-time dan intel analitik adaptif</li>
-                        <li>Antarmuka responsif siap mendukung misi di berbagai perangkat</li>
+                        <li>Role-based dashboards with operational KPIs</li>
+                        <li>Real-time notifications and adaptive analytics</li>
+                        <li>Responsive interface for mission-critical operations</li>
+                        <li>Secure and scalable training environment</li>
                     </ul>
                 </div>
             </div>

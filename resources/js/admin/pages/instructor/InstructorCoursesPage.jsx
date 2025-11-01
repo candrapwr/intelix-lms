@@ -27,50 +27,10 @@ const managedCourses = [
 export default function InstructorCoursesPage() {
     return (
         <div className="instructor-page">
-            <header className="section-header">
-                <div>
-                    <h1>Mission portfolio</h1>
-                    <p>Rilis modul operasi, pantau jumlah operative aktif, dan respons cepat permintaan intel.</p>
-                </div>
-                <button type="button" className="primary-button">
-                    Tambah misi
-                </button>
-            </header>
-
-            <table className="course-table">
-                <thead>
-                    <tr>
-                        <th>Mission</th>
-                        <th>Status</th>
-                        <th>Operatives</th>
-                        <th>Modules</th>
-                        <th>Impact</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody>
-                    {managedCourses.map((course) => (
-                        <tr key={course.title}>
-                            <td>
-                                <strong>{course.title}</strong>
-                            </td>
-                            <td>
-                                <span className={`status-pill status-${course.status.toLowerCase()}`}>
-                                    {course.status}
-                                </span>
-                            </td>
-                            <td>{course.operatives}</td>
-                            <td>{course.modules}</td>
-                            <td>{course.impact}</td>
-                            <td>
-                                <button type="button" className="ghost-button">
-                                    Kelola misi
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <section className="under-development-section">
+                <h2>Courses - Under Development</h2>
+                <p>This courses management page is currently under development and will be available soon.</p>
+            </section>
         </div>
     );
 }
