@@ -45,6 +45,7 @@ class CourseResource extends JsonResource
                     'email' => $this->instructor->email,
                 ];
             }),
+            'sections' => CourseSectionResource::collection($this->whenLoaded('sections')),
             'students' => $this->whenLoaded('students', function () {
                 return $this->students->map(fn ($student) => [
                     'id' => $student->id,
