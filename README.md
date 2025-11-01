@@ -1,0 +1,253 @@
+# INTELIX LMS (Laravel 12 + PostgreSQL + React Admin)
+
+INTELIX adalah platform pembelajaran intelijen terpadu yang menyatukan API backend Laravel, Postgres sebagai basis data utama, dan SPA admin berbasis React (Vite). Sistem ini dirancang sebagai pusat resmi pelatihan intelijen digital untuk agen aktif, calon agen, serta analis agar mampu mengasah keterampilan operasional, analitik, dan koordinasi misi secara terukur.
+
+---
+
+## 0. Fitur Unggulan
+- Skema data lengkap untuk Course, Module, Lesson, Enrollment, Assignment, Submission, dan Category guna menampung materi operasi intelijen, simulasi lapangan, dan analisis strategis.
+- Role management (`admin` sebagai command center, `instructor` sebagai field coach, `student` sebagai trainee) dengan dukungan soft delete dan profil JSON untuk rekam kompetensi.
+- API REST `/api/admin` menghadirkan kendali penuh atas dashboard, kursus, dan personel pelatihan intelijen, siap diproteksi autentikasi tingkat tinggi.
+- Admin SPA modern: sidebar responsif, search bar, tema glassmorphism, dan navigasi profesional layaknya mission control deck.
+- Portal login modern dengan pemilihan peran (`admin`, `instructor`, `student`) serta dashboard khusus yang menyajikan KPI operasional masing-masing peran.
+- CRUD interaktif dengan modal, validasi dasar, filter pencarian, pagination, serta toast notifikasi real-time untuk memastikan update misi instan.
+- Master data Unit & Sub Unit untuk mengelompokkan detasemen, task force, dan tim analisis lintas divisi.
+- Master data Klasifikasi Kursus untuk mengelompokkan jalur pelatihan (dasar, lanjutan, spesialis) secara terstruktur.
+- Penetapan status training gratis secara default sembari membuka peluang integrasi skema insentif atau clearance level ke depan.
+- Seeder contoh menyiapkan administrator, pelatih intelijen, serta trainee dummy untuk kickstart demo taktis.
+
+## 1. Tumpukan Teknologi
+- **Backend**: Laravel 12, PHP 8.2, Eloquent ORM, FormRequest, API Resources.
+- **Database**: PostgreSQL (menggunakan fitur `ilike`, enum, relations).
+- **Frontend Admin**: React 18, React Router, Vite dev server, CSS modular per komponen.
+- **Tooling**: Composer, npm, artisan, PHPUnit (testing), Vite bundler.
+
+## 2. Persyaratan Lokal
+- PHP >= 8.2 dengan ekstensi: `pgsql`, `pdo_pgsql`, `mbstring`, `openssl`, `gd`, `intl`.
+- Composer >= 2.5.
+- Node.js >= 20 & npm.
+- PostgreSQL >= 14.
+- (Opsional) Redis untuk queue/cache jika ingin dikembangkan nanti.
+
+## 3. Konfigurasi Lingkungan
+1. Duplikasi dan sesuaikan environment:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+2. Set variabel penting di `.env`:
+   ```env
+   APP_NAME="INTELIX"
+   APP_URL=http://localhost:8000
+   APP_ADMIN_EMAIL=command@intelix.local
+
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=intelix_lms
+   DB_USERNAME=intelix_admin
+   DB_PASSWORD=change_me_now
+
+   SESSION_DRIVER=database
+   CACHE_STORE=database
+   QUEUE_CONNECTION=database
+   ```
+3. Pastikan database Postgres sesuai atau buat baru:
+   ```bash
+   createdb intelix_lms
+   createuser --pwprompt intelix_admin
+   ```
+
+## 4. Instalasi Dependensi
+```bash
+composer install
+npm install
+```
+
+## 5. Migrasi & Seeder
+```bash
+php artisan migrate --seed
+```
+Seeder akan membuat:
+- 1 akun admin (email dari `APP_ADMIN_EMAIL`, password default `password`).
+- 3 instruktur dummy dengan profil expertise.
+- 5 siswa dummy.
+
+## 6. Menjalankan Aplikasi
+### Backend API
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+### Vite Dev Server (SPA Admin)
+```bash
+npm run dev
+```
+Laravel Vite plugin otomatis mem-proxy hasil compile ke `http://localhost:8000`. Akses panel admin di `http://localhost:8000/admin`.
+Halaman login tersedia di `http://localhost:8000/admin/login` dan akan meneruskan pengguna ke dashboard sesuai peran yang dipilih.
+
+### Build Produksi
+```bash
+npm run build
+php artisan optimize
+```
+Output dibundle ke `public/build`. Jalankan kembali `php artisan view:clear` bila ada perubahan blade.
+
+## 7. Struktur Direktori
+```
+app/
+  Http/
+    Controllers/
+      Admin/
+        CourseController.php
+        DashboardController.php
+        InstructorController.php
+        StudentController.php
+    Requests/
+      Admin/
+        StoreCourseRequest.php
+        UpdateCourseRequest.php
+        StoreStudentRequest.php
+        UpdateStudentRequest.php
+        StoreInstructorRequest.php
+        UpdateInstructorRequest.php
+    Resources/
+      CourseResource.php
+      UserResource.php
+  Models/
+    Assignment.php
+    Category.php
+    Course.php
+    Enrollment.php
+    Lesson.php
+    Module.php
+    Submission.php
+
+bootstrap/app.php            # Registrasi file routes/api.php
+
+config/app.php               # Konfigurasi tambahan (APP_ADMIN_EMAIL)
+
+database/
+  factories/
+    UserFactory.php          # State admin/instructor/student
+  migrations/                # Skema Postgres untuk domain LMS
+  seeders/
+    DatabaseSeeder.php       # Seeder admin + data dummy
+
+resources/
+  js/admin/
+    api/client.js            # Axios instance /api/admin
+    components/
+      Layout.jsx
+      StudentLayout.jsx
+      InstructorLayout.jsx
+      ProtectedRoute.jsx
+      Modal.jsx
+      layout.css
+    context/
+      NotificationContext.jsx
+      AuthContext.jsx
+    hooks/
+      useDebounce.js
+    pages/
+      DashboardPage.jsx
+      CourseListPage.jsx
+      CourseClassificationPage.jsx
+      StudentListPage.jsx
+      InstructorListPage.jsx
+      UnitListPage.jsx
+      SubUnitListPage.jsx
+      NotFoundPage.jsx
+      auth/
+        LoginPage.jsx
+      student/
+        StudentHomePage.jsx
+        StudentCoursesPage.jsx
+        StudentProgressPage.jsx
+      instructor/
+        InstructorHomePage.jsx
+        InstructorCoursesPage.jsx
+        InstructorStudentsPage.jsx
+    App.jsx
+    main.jsx
+  views/
+    admin.blade.php          # Shell SPA admin + @viteReactRefresh
+
+routes/
+  api.php                    # Semua route /api/admin
+  web.php                    # Route welcome & fallback SPA admin
+
+public/build/                # Output produksi Vite
+vite.config.js               # Konfigurasi Vite (Laravel, Tailwind, React)
+package.json
+```
+
+## 8. Arsitektur API Admin
+- Prefix route: `/api/admin` (lihat `routes/api.php`).
+- Middleware default `api` (siap ditambah auth seperti Sanctum).
+- Controller Pattern: perform query + resource transform.
+- Filtering & pagination lewat query string (`status`, `category_id`, `level`, `search`).
+
+### Endpoint Awal
+| Method | Endpoint | Controller | Catatan |
+| --- | --- | --- | --- |
+| GET | `/api/admin/dashboard/metrics` | `DashboardController@metrics` | Ringkasan total siswa, instruktur, kursus, completion rate |
+| GET | `/api/admin/courses` | `CourseController@index` | Support filter status/category/level/search |
+| POST | `/api/admin/courses` | `CourseController@store` | Auto-assign slug dari judul bila kosong |
+| GET | `/api/admin/courses/{slug}` | `CourseController@show` | Memuat modules, lessons, students |
+| PATCH | `/api/admin/courses/{slug}` | `CourseController@update` | Partial update |
+| DELETE | `/api/admin/courses/{slug}` | `CourseController@destroy` | Soft delete di masa depan bisa diaktifkan |
+| GET/POST | `/api/admin/students` | `StudentController` | Password otomatis di-hash; role lock ke `student` |
+| GET/PATCH/DELETE | `/api/admin/students/{id}` | `StudentController` | Validasi email unik + optional password |
+| GET/POST | `/api/admin/instructors` | `InstructorController` | Memuat daftar kursus ajar |
+| GET/PATCH/DELETE | `/api/admin/instructors/{id}` | `InstructorController` | Update profil expertise/bio |
+| GET/POST | `/api/admin/units` | `UnitController` | Master unit pelatihan, lengkap dengan jumlah sub unit |
+| GET/PATCH/DELETE | `/api/admin/units/{id}` | `UnitController` | Detail, update, dan hapus unit (menghapus sub unit turunannya) |
+| GET/POST | `/api/admin/sub-units` | `SubUnitController` | Master sub unit per unit |
+| GET/PATCH/DELETE | `/api/admin/sub-units/{id}` | `SubUnitController` | Detail, update, dan hapus sub unit |
+
+Respons standar menggunakan `CourseResource` & `UserResource` untuk menjaga kontrak JSON.
+
+## 9. SPA Admin & Portal Pengguna
+- Entry React: `resources/js/admin/main.jsx` dengan `BrowserRouter basename="/admin"` dan provider `NotificationContext` + `AuthContext`.
+- Autentikasi frontend dummy via `context/AuthContext.jsx` (localStorage). Integrasikan dengan Sanctum/Breeze untuk produksi.
+- Layout admin: `components/Layout.jsx` menyediakan navigasi, pencarian, badge user, dan tombol logout.
+- Portal student (`components/StudentLayout.jsx`) & instructor (`components/InstructorLayout.jsx`) menghadirkan menu khusus dengan halaman demo di `pages/student/*` dan `pages/instructor/*`.
+- Menu Master Data kini memisahkan Unit, Sub Unit, dan Course Classification di sidebar admin untuk navigasi yang lebih rapi.
+- Halaman admin aktif mencakup Dashboard, Kursus, Siswa, Instruktur, Units, dan Sub Units yang terhubung langsung ke API.
+- Tambahkan state management (Context/Redux/React Query) jika beban data semakin kompleks atau data real-time.
+
+## 10. Perintah Berguna
+```bash
+# Generasi key baru
+php artisan key:generate
+
+# Membuat migration/model/controller baru
+php artisan make:model Course -mcr
+
+# Cek daftar route admin
+php artisan route:list --path=admin
+
+# Jalankan unit & feature test
+php artisan test
+
+# Format otomatis (Laravel Pint)
+./vendor/bin/pint
+```
+
+## 11. Pipeline Pengembangan Disarankan
+- Gunakan branch feature dan PR review (pastikan menjalankan `php artisan test`).
+- Terapkan CI sederhana: `composer install`, `npm ci`, `php artisan test`, `npm run build`.
+- Monitor perubahan schema dengan men-commit file migration baru.
+- Buat dokumentasi API tambahan dengan Laravel Scribe atau OpenAPI.
+
+## 12. Langkah Berikutnya
+1. Integrasi autentikasi admin (Laravel Breeze + Sanctum) dan middleware otorisasi.
+2. Tambah modul Course Builder (CRUD module, lesson, assignment) dengan FormRequest khusus.
+3. Implementasi upload media (S3/Spaces) dan pencatatan progress real-time.
+4. Tambahkan unit & feature test untuk endpoint kritikal (Course/Student/Instructor).
+5. Kembangkan UI admin: tabel data, form, filter, chart (mis. Recharts, Chart.js).
+
+---
+
+Selamat melanjutkan pengembangan LMS! Dokumentasi ini diharapkan mempermudah onboarding tim, mempercepat debugging, dan menjaga konsistensi arsitektur ke depan.
