@@ -264,17 +264,17 @@ export default function CourseListPage() {
             <section className="surface">
                 <div className="surface-header">
                     <div>
-                        <div className="surface-title">Manajemen Kursus</div>
+                        <div className="surface-title">Course Management</div>
                         <div className="surface-subtitle">
-                            Kelola katalog kursus non-komersial, atur status rilis, dan pantau keterlibatan peserta.
+                            Kelola katalog kursus dan pantau keterlibatan peserta
                         </div>
                     </div>
                     <div className="table-actions">
                         <button type="button" className="btn btn-ghost" onClick={() => fetchCourses(page)}>
-                            Muat Ulang
+                            Refresh
                         </button>
                         <button type="button" className="btn btn-primary" onClick={handleOpenCreate}>
-                            + Kursus Baru
+                            + New Course
                         </button>
                     </div>
                 </div>
@@ -282,7 +282,7 @@ export default function CourseListPage() {
                 <div className="filters-row">
                     <input
                         type="search"
-                        placeholder="Cari judul kursus..."
+                        placeholder="Search course title..."
                         value={filters.search}
                         onChange={(event) =>
                             setFilters((prev) => ({ ...prev, search: event.target.value }))
@@ -294,7 +294,7 @@ export default function CourseListPage() {
                             setFilters((prev) => ({ ...prev, status: event.target.value }))
                         }
                     >
-                        <option value="">Semua status</option>
+                        <option value="">All Status</option>
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
                         <option value="archived">Archived</option>
@@ -305,7 +305,7 @@ export default function CourseListPage() {
                             setFilters((prev) => ({ ...prev, classification_id: event.target.value }))
                         }
                     >
-                        <option value="">Semua klasifikasi</option>
+                        <option value="">All Classifications</option>
                         {classifications.map((classification) => (
                             <option key={classification.id} value={classification.id}>
                                 {classification.name}
@@ -316,18 +316,17 @@ export default function CourseListPage() {
 
                 {loading ? (
                     <div className="empty-state">
-                        <h2>Memuat data kursus...</h2>
-                        <p>Silakan tunggu sejenak, kami sedang mengambil data dari server.</p>
+                        <h2>Loading courses...</h2>
+                        <p>Please wait while we fetch data from server.</p>
                     </div>
                 ) : courses.length === 0 ? (
                     <div className="empty-state">
-                        <h2>Belum ada kursus</h2>
+                        <h2>No courses found</h2>
                         <p>
-                            Mulai tambah kursus untuk mengisi katalog pembelajaran Anda. Kursus bisa
-                            berupa video, modul teks, maupun blended learning.
+                            Start by creating your first course to build the training catalog.
                         </p>
                         <button type="button" className="btn btn-primary" onClick={handleOpenCreate}>
-                            Buat Kursus
+                            Create Course
                         </button>
                     </div>
                 ) : (
@@ -335,12 +334,12 @@ export default function CourseListPage() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Judul</th>
-                                    <th>Kategori</th>
-                                    <th>Klasifikasi</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Classification</th>
                                     <th>Status</th>
                                     <th>Enrollments</th>
-                                    <th>Aksi</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -351,13 +350,13 @@ export default function CourseListPage() {
                                                 {course.title}
                                             </div>
                                             <div style={{ color: '#64748b', fontSize: '0.82rem' }}>
-                                                {course.short_description || 'Belum ada ringkasan.'}
+                                                {course.short_description || 'No description.'}
                                             </div>
                                         </td>
                                         <td>{course.category?.name ?? '-'}</td>
                                         <td>
                                             <span className="chip">
-                                                {course.classification?.name ?? 'Tidak diklasifikasikan'}
+                                                {course.classification?.name ?? 'Unclassified'}
                                             </span>
                                         </td>
                                         <td>
@@ -380,7 +379,7 @@ export default function CourseListPage() {
                                                     type="button"
                                                     className="btn btn-ghost btn-icon"
                                                     onClick={() => handlePreview(course)}
-                                                    title="Lihat detail kursus"
+                                                    title="View course details"
                                                 >
                                                     <PreviewIcon />
                                                 </button>
@@ -388,7 +387,7 @@ export default function CourseListPage() {
                                                     type="button"
                                                     className="btn btn-ghost btn-icon"
                                                     onClick={() => handleOpenEdit(course)}
-                                                    title="Edit kursus"
+                                                    title="Edit course"
                                                 >
                                                     <EditIcon />
                                                 </button>
@@ -396,7 +395,7 @@ export default function CourseListPage() {
                                                     type="button"
                                                     className="btn btn-danger btn-icon"
                                                     onClick={() => handleDelete(course)}
-                                                    title="Hapus kursus"
+                                                    title="Delete course"
                                                 >
                                                     <DeleteIcon />
                                                 </button>
@@ -415,7 +414,7 @@ export default function CourseListPage() {
                                     disabled={disabledPrev}
                                     onClick={() => !disabledPrev && fetchCourses(page - 1)}
                                 >
-                                    ‹ Sebelumnya
+                                    ‹ Previous
                                 </button>
                                 <button
                                     type="button"
@@ -423,7 +422,7 @@ export default function CourseListPage() {
                                     disabled={disabledNext}
                                     onClick={() => !disabledNext && fetchCourses(page + 1)}
                                 >
-                                    Selanjutnya ›
+                                    Next ›
                                 </button>
                             </div>
                         </div>
@@ -434,41 +433,44 @@ export default function CourseListPage() {
             <Modal
                 open={modalOpen}
                 onClose={handleCloseModal}
-                title={editingCourse ? 'Perbarui Kursus' : 'Kursus Baru'}
-                description="Lengkapi informasi kurikulum untuk peserta Anda."
+                title={editingCourse ? 'Update Course' : 'New Course'}
+                description="Complete course information for your training program."
                 footer={
                     <>
                         <button type="button" className="btn btn-ghost" onClick={handleCloseModal}>
-                            Batal
+                            Cancel
                         </button>
                         <button type="submit" form="course-form" className="btn btn-primary">
-                            Simpan Kursus
+                            Save Course
                         </button>
                     </>
                 }
             >
-                <form id="course-form" className="form-grid" onSubmit={handleSubmit}>
-                    <div className="form-field">
-                        <label htmlFor="title">Judul Kursus</label>
-                        <input
-                            id="title"
-                            name="title"
-                            value={form.title}
-                            onChange={handleChange}
-                            required
-                        />
+                <form id="course-form" className="course-form-grid" onSubmit={handleSubmit}>
+                    <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                        <div className="form-field">
+                            <label htmlFor="title">Course Title</label>
+                            <input
+                                id="title"
+                                name="title"
+                                value={form.title}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-field">
+                            <label htmlFor="slug">Slug (optional)</label>
+                            <input
+                                id="slug"
+                                name="slug"
+                                value={form.slug}
+                                onChange={handleChange}
+                                placeholder="Auto-generated from title"
+                            />
+                        </div>
                     </div>
-                    <div className="form-field">
-                        <label htmlFor="slug">Slug (opsional)</label>
-                        <input
-                            id="slug"
-                            name="slug"
-                            value={form.slug}
-                            onChange={handleChange}
-                            placeholder="otomatis dari judul jika dikosongkan"
-                        />
-                    </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                    
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
                         <div className="form-field">
                             <label htmlFor="status">Status</label>
                             <select
@@ -483,7 +485,7 @@ export default function CourseListPage() {
                             </select>
                         </div>
                         <div className="form-field">
-                            <label htmlFor="classification_id">Klasifikasi kursus</label>
+                            <label htmlFor="classification_id">Classification</label>
                             <select
                                 id="classification_id"
                                 name="classification_id"
@@ -491,9 +493,7 @@ export default function CourseListPage() {
                                 onChange={handleChange}
                                 required
                             >
-                                <option value="" disabled>
-                                    Pilih klasifikasi
-                                </option>
+                                <option value="" disabled>Select classification</option>
                                 {classifications.map((classification) => (
                                     <option key={classification.id} value={classification.id}>
                                         {classification.name}
@@ -502,7 +502,7 @@ export default function CourseListPage() {
                             </select>
                         </div>
                         <div className="form-field">
-                            <label htmlFor="duration_minutes">Durasi (menit)</label>
+                            <label htmlFor="duration_minutes">Duration (min)</label>
                             <input
                                 id="duration_minutes"
                                 name="duration_minutes"
@@ -510,32 +510,34 @@ export default function CourseListPage() {
                                 value={form.duration_minutes}
                                 onChange={handleChange}
                                 min="0"
+                                placeholder="0"
                             />
                         </div>
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
                         <div className="form-field">
-                            <label htmlFor="category_id">ID Kategori</label>
+                            <label htmlFor="category_id">Category ID</label>
                             <input
                                 id="category_id"
                                 name="category_id"
                                 value={form.category_id}
                                 onChange={handleChange}
-                                placeholder="Masukkan ID kategori (opsional)"
+                                placeholder="Optional"
                             />
                         </div>
                         <div className="form-field">
-                            <label htmlFor="instructor_id">ID Instruktur</label>
+                            <label htmlFor="instructor_id">Instructor ID</label>
                             <input
                                 id="instructor_id"
                                 name="instructor_id"
                                 value={form.instructor_id}
                                 onChange={handleChange}
-                                placeholder="Masukkan ID instruktur (opsional)"
+                                placeholder="Optional"
                             />
                         </div>
                         <div className="form-field">
-                            <label htmlFor="published_at">Tanggal Publish</label>
+                            <label htmlFor="published_at">Publish Date</label>
                             <input
                                 id="published_at"
                                 name="published_at"
@@ -545,24 +547,28 @@ export default function CourseListPage() {
                             />
                         </div>
                     </div>
+                    
                     <div className="form-field">
-                        <label htmlFor="short_description">Ringkasan</label>
+                        <label htmlFor="short_description">Short Description</label>
                         <textarea
                             id="short_description"
                             name="short_description"
                             value={form.short_description}
                             onChange={handleChange}
-                            rows={3}
+                            rows={2}
+                            placeholder="Brief course overview"
                         />
                     </div>
+                    
                     <div className="form-field">
-                        <label htmlFor="description">Deskripsi Lengkap</label>
+                        <label htmlFor="description">Full Description</label>
                         <textarea
                             id="description"
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            rows={6}
+                            rows={3}
+                            placeholder="Detailed course description"
                         />
                     </div>
                 </form>

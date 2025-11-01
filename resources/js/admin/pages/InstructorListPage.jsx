@@ -421,7 +421,7 @@ export default function InstructorListPage() {
                 }
             >
                 <form id="instructor-form" className="form-grid" onSubmit={handleSubmit}>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="name">Nama</label>
                             <input
@@ -444,7 +444,7 @@ export default function InstructorListPage() {
                             />
                         </div>
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="phone">Nomor Telepon</label>
                             <input id="phone" name="phone" value={form.phone} onChange={handleChange} />
@@ -497,7 +497,7 @@ export default function InstructorListPage() {
                             name="bio"
                             value={form.bio}
                             onChange={handleChange}
-                            rows={4}
+                            rows={3}
                         />
                     </div>
                     <div className="form-field">

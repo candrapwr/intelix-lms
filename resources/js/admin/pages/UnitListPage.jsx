@@ -410,10 +410,10 @@ export default function UnitListPage() {
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            rows={4}
+                            rows={3}
                         />
                     </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
                         <input
                             type="checkbox"
                             name="is_active"

@@ -24,37 +24,10 @@ const cohorts = [
 export default function InstructorStudentsPage() {
     return (
         <div className="instructor-page">
-            <header className="section-header">
-                <div>
-                    <h1>Operative cells</h1>
-                    <p>Rayakan capaian, temukan hambatan lapangan, dan pastikan komunikasi misi tetap lancar.</p>
-                </div>
-                <button type="button" className="ghost-button">
-                    Kirim instruksi ke semua operative
-                </button>
-            </header>
-
-            <div className="cohort-grid">
-                {cohorts.map((cohort) => (
-                    <article key={cohort.name} className="cohort-card">
-                        <header>
-                            <h2>{cohort.name}</h2>
-                            <span>{cohort.members} operative</span>
-                        </header>
-                        <div className="progress-bar">
-                            <div style={{ width: `${cohort.progress}%` }} />
-                        </div>
-                        <div className="cohort-meta">
-                            <span>Status kesiapan</span>
-                            <strong>{cohort.progress}%</strong>
-                        </div>
-                        <p>{cohort.highlight}</p>
-                        <button type="button" className="primary-button">
-                            Buka command view
-                        </button>
-                    </article>
-                ))}
-            </div>
+            <section className="under-development-section">
+                <h2>Students - Under Development</h2>
+                <p>This students management page is currently under development and will be available soon.</p>
+            </section>
         </div>
     );
 }

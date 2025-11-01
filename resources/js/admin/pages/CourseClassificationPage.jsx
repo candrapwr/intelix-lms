@@ -151,11 +151,11 @@ export default function CourseClassificationPage() {
         <div className="surface">
             <div className="surface-header">
                 <div>
-                    <h1>Klasifikasi Kursus</h1>
-                    <p>
+                    <div className="surface-title">Master Unit</div>
+                    <div className="surface-subtitle">
                         Kelola klasifikasi kursus untuk mengelompokkan tingkat operasi, spesialisasi,
                         dan jalur pelatihan intelijen.
-                    </p>
+                    </div>
                 </div>
                 <button type="button" className="btn btn-primary" onClick={handleOpenCreate}>
                     Tambah Klasifikasi
@@ -275,11 +275,11 @@ export default function CourseClassificationPage() {
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            rows={3}
+                            rows={2}
                             placeholder="Gambaran singkat mengenai klasifikasi"
                         />
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="sort_order">Urutan</label>
                             <input
@@ -292,7 +292,7 @@ export default function CourseClassificationPage() {
                             />
                         </div>
                         <div className="form-field checkbox-field">
-                            <label htmlFor="is_active">
+                            <label htmlFor="is_active" style={{ fontSize: '0.8rem' }}>
                                 <input
                                     id="is_active"
                                     name="is_active"

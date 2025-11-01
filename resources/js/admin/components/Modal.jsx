@@ -10,12 +10,12 @@ export default function Modal({ open, title, description, onClose, children, foo
                     <div>
                         <div className="modal-title">{title}</div>
                         {description ? (
-                            <div className="surface-subtitle" style={{ marginTop: '0.25rem' }}>
+                            <div className="surface-subtitle" style={{ marginTop: '0.2rem' }}>
                                 {description}
                             </div>
                         ) : null}
                     </div>
-                    <button type="button" className="modal-close" onClick={onClose} aria-label="Tutup dialog">
+                    <button type="button" className="modal-close" onClick={onClose} aria-label="Close dialog">
                         ✕
                     </button>
                 </div>

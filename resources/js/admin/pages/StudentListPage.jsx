@@ -473,7 +473,7 @@ export default function StudentListPage() {
                 }
             >
                 <form id="student-form" className="form-grid" onSubmit={handleSubmit}>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="name">Nama</label>
                             <input
@@ -496,7 +496,7 @@ export default function StudentListPage() {
                             />
                         </div>
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="phone">Nomor Telepon</label>
                             <input id="phone" name="phone" value={form.phone} onChange={handleChange} />
@@ -516,7 +516,7 @@ export default function StudentListPage() {
                             />
                         </div>
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="unit_id">Unit</label>
                             <select
@@ -551,7 +551,7 @@ export default function StudentListPage() {
                             </select>
                         </div>
                     </div>
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.6rem' }}>
                         <div className="form-field">
                             <label htmlFor="timezone">Zona Waktu (Opsional)</label>
                             <input
