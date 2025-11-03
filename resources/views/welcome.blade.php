@@ -457,7 +457,7 @@
                         <a href="#galeri">Galeri</a>
                         <a href="#intel">Intel</a>
                     </nav>
-                    <a class="cta" href="{{ url('/admin/login') }}">Masuk Portal Aman</a>
+                    <a class="cta" href="{{ url('/admin') }}">Masuk Portal Aman</a>
                 </div>
             </header>
 
@@ -472,7 +472,7 @@
                                 INTELIX menyelaraskan kurikulum intelijen, pengukuran kesiapan, dan koordinasi lintas detasemen agar misi strategis berjalan presisi.
                             </p>
                             <div class="actions">
-                                <a class="cta" href="{{ url('/admin/login') }}">Masuk Konsol Pelatihan</a>
+                                <a class="cta" href="{{ url('/admin') }}">Masuk Konsol Pelatihan</a>
                                 <a class="ghost" href="#kemampuan">Lihat fitur unggulan</a>
                             </div>
                         </div>
@@ -553,7 +553,7 @@
                                 Pengalaman yang disesuaikan untuk command lead, field coach, dan trainee memastikan seluruh rantai intel berjalan sinkron.
                             </p>
                         </div>
-                        <a class="ghost" href="{{ url('/admin/login') }}">Masuk ke portal</a>
+                        <a class="ghost" href="{{ url('/admin') }}">Masuk ke portal</a>
                     </div>
                     <div class="grid">
                         <article class="card">
