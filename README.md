@@ -14,6 +14,7 @@ INTELIX adalah platform pembelajaran intelijen terpadu yang menyatukan API backe
 - Master data Unit & Sub Unit untuk mengelompokkan detasemen, task force, dan tim analisis lintas divisi.
 - Master data Klasifikasi Kursus untuk mengelompokkan jalur pelatihan (dasar, lanjutan, spesialis) secara terstruktur.
 - Section builder per kursus dengan materi terlampir (PDF, video, dokumen) yang tersimpan terurut dan siap diunduh peserta.
+- Manajemen kuis pilihan ganda per section dengan dukungan pembuatan oleh admin/instruktur, penilaian otomatis, serta rekam jawaban siswa untuk evaluasi lanjutan.
 - Penetapan status training gratis secara default sembari membuka peluang integrasi skema insentif atau clearance level ke depan.
 - Seeder contoh menyiapkan administrator, pelatih intelijen, serta trainee dummy untuk kickstart demo taktis.
 
@@ -105,11 +106,18 @@ app/
         CourseController.php
         CourseMaterialController.php
         CourseSectionController.php
+        CourseQuizController.php
         DashboardController.php
         InstructorController.php
         StudentController.php
+      Instructor/
+        InstructorCourseController.php
+        InstructorCourseSectionController.php
+        InstructorCourseMaterialController.php
+        InstructorCourseQuizController.php
       Student/
         StudentCourseController.php
+        StudentQuizController.php
       AuthController.php
     Requests/
       Admin/
@@ -123,8 +131,16 @@ app/
         UpdateStudentRequest.php
         StoreInstructorRequest.php
         UpdateInstructorRequest.php
+        StoreCourseQuizRequest.php
+        UpdateCourseQuizRequest.php
+      Student/
+        SubmitSectionQuizRequest.php
     Resources/
       CourseResource.php
+      CourseQuizResource.php
+      CourseQuizOptionResource.php
+      CourseQuizAttemptResource.php
+      CourseQuizAttemptAnswerResource.php
       UserResource.php
       Student/
         StudentCourseDetailResource.php
@@ -135,6 +151,10 @@ app/
     Course.php
     CourseMaterial.php
     CourseSection.php
+    CourseQuiz.php
+    CourseQuizOption.php
+    CourseQuizAttempt.php
+    CourseQuizAttemptAnswer.php
     Enrollment.php
     Lesson.php
     Module.php
@@ -216,6 +236,8 @@ package.json
 | GET | `/api/admin/courses/{slug}` | `CourseController@show` | Memuat modules, lessons, students |
 | PATCH | `/api/admin/courses/{slug}` | `CourseController@update` | Partial update |
 | DELETE | `/api/admin/courses/{slug}` | `CourseController@destroy` | Soft delete di masa depan bisa diaktifkan |
+| GET/POST | `/api/admin/sections/{section}/quizzes` | `CourseQuizController@index/store` | Kelola kuis per section, termasuk urutan dan penjelasan |
+| PATCH/DELETE | `/api/admin/quizzes/{quiz}` | `CourseQuizController@update/destroy` | Pembaruan konten kuis atau penghapusan permanen |
 | GET/POST | `/api/admin/students` | `StudentController` | Password otomatis di-hash; role lock ke `student` |
 | GET/PATCH/DELETE | `/api/admin/students/{id}` | `StudentController` | Validasi email unik + optional password |
 | GET/POST | `/api/admin/instructors` | `InstructorController` | Memuat daftar kursus ajar |
@@ -241,12 +263,14 @@ Respons standar menggunakan `CourseResource` & `UserResource` untuk menjaga kont
 | POST | `/api/student/courses/{slug}/enroll` | `StudentCourseController@enroll` | Enroll kursus (idempotent; tolak jika sudah terdaftar) |
 | GET | `/api/student/my-courses` | `StudentCourseController@myCourses` | Kursus yang diikuti lengkap dengan progres singkat |
 | GET | `/api/student/my-courses/{slug}` | `StudentCourseController@showMyCourse` | Detail kursus + section & materi; update `last_accessed_at` |
+| POST | `/api/student/sections/{section}/quizzes/submit` | `StudentQuizController@submit` | Simpan jawaban kuis section, nilai otomatis, dan kunci hasil |
 
 ## 9. SPA Admin & Portal Pengguna
 - Entry React: `resources/js/admin/main.jsx` dengan `BrowserRouter basename="/admin"` dan provider `NotificationContext` + `AuthContext`.
 - Autentikasi frontend memakai token ringan via endpoint `/api/auth/login`, disimpan di localStorage melalui `context/AuthContext.jsx`. Integrasi dengan Sanctum/Breeze tetap disarankan untuk produksi.
 - Layout admin: `components/Layout.jsx` menyediakan navigasi, pencarian, badge user, dan tombol logout.
-- Portal student (`components/StudentLayout.jsx`) kini menampilkan katalog kursus yang bisa langsung di-enroll, daftar kursus yang sudah diikuti lengkap dengan section & materi, sementara portal instruktur (`components/InstructorLayout.jsx`) siap dikembangkan.
+- Portal student (`components/StudentLayout.jsx`) kini menampilkan katalog kursus yang bisa langsung di-enroll, daftar kursus yang sudah diikuti lengkap dengan section, materi, serta kuis yang dapat diselesaikan dan tersimpan ke server untuk evaluasi.
+- Portal instruktur (`components/InstructorLayout.jsx`) mengelola section, materi, dan kuis per kursus ajar dengan pengalaman serupa admin namun terbatas pada kelas masing-masing.
 - Menu Master Data kini memisahkan Unit, Sub Unit, dan Course Classification di sidebar admin untuk navigasi yang lebih rapi.
 - Halaman admin aktif mencakup Dashboard, Kursus, Siswa, Instruktur, Units, dan Sub Units yang terhubung langsung ke API.
 - Tambahkan state management (Context/Redux/React Query) jika beban data semakin kompleks atau data real-time.

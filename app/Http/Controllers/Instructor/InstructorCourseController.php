@@ -37,6 +37,7 @@ class InstructorCourseController extends Controller
         $course->load([
             'classification:id,name',
             'sections.materials',
+            'sections.quizzes.options',
         ])->loadCount(['sections', 'enrollments']);
 
         return new InstructorCourseDetailResource($course);

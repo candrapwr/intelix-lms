@@ -56,6 +56,7 @@ class CourseController extends Controller
             'instructor',
             'classification',
             'sections.materials',
+            'sections.quizzes.options',
             'modules.lessons',
             'students',
         ])
