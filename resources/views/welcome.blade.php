@@ -3,10 +3,13 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{{ config('app.name', 'INTELIX') }} Portal Pelatihan Intelijen</title>
+        <title>{{ config('app.name', 'INTELIX') }} &mdash; Portal Pelatihan Intelijen</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+            rel="stylesheet"
+        />
         <style>
             :root {
                 color-scheme: dark;
@@ -17,7 +20,7 @@
                 --card-bg: rgba(6, 11, 25, 0.82);
                 --card-border: rgba(148, 163, 184, 0.18);
                 --accent: #60a5fa;
-                --muted: #9ba3b0;
+                --muted: #94a3b8;
                 --headline: #f8fafc;
             }
 
@@ -112,6 +115,21 @@
                 box-shadow: 0 18px 36px -24px rgba(96, 165, 250, 0.65);
             }
 
+            .ghost {
+                border: 1px solid rgba(148, 163, 184, 0.35);
+                background: transparent;
+                color: var(--headline);
+                padding: 0.65rem 1.4rem;
+                border-radius: 999px;
+                text-decoration: none;
+                transition: border 0.2s ease, background 0.2s ease;
+            }
+
+            .ghost:hover {
+                border-color: rgba(96, 165, 250, 0.65);
+                background: rgba(96, 165, 250, 0.1);
+            }
+
             main {
                 flex: 1;
                 padding-bottom: 6rem;
@@ -120,7 +138,7 @@
             .hero {
                 display: grid;
                 gap: 2.5rem;
-                padding: 6rem 0 4rem;
+                padding: 1rem 0 4rem;
             }
 
             .hero-grid {
@@ -169,27 +187,12 @@
                 flex-wrap: wrap;
             }
 
-            .ghost {
-                border: 1px solid rgba(148, 163, 184, 0.35);
-                background: transparent;
-                color: var(--headline);
-                padding: 0.65rem 1.4rem;
-                border-radius: 999px;
-                text-decoration: none;
-                transition: border 0.2s ease, background 0.2s ease;
-            }
-
-            .ghost:hover {
-                border-color: rgba(96, 165, 250, 0.65);
-                background: rgba(96, 165, 250, 0.1);
-            }
-
             .hero-visual {
                 position: relative;
                 border-radius: 1.75rem;
                 overflow: hidden;
                 border: 1px solid rgba(96, 165, 250, 0.2);
-                background: url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80')
+                background: url('https://images.unsplash.com/photo-1535868463750-c78d9543614f?auto=format&fit=crop&w=1200&q=80')
                     center/cover no-repeat;
                 min-height: 360px;
                 display: flex;
@@ -210,6 +213,20 @@
                 padding: 2.5rem;
                 display: grid;
                 gap: 1.5rem;
+            }
+
+            .hero-overlay .status-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.35rem 0.9rem;
+                border-radius: 999px;
+                border: 1px solid rgba(96, 165, 250, 0.35);
+                font-size: 0.78rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: rgba(148, 197, 255, 0.9);
+                background: rgba(15, 23, 42, 0.6);
             }
 
             .overlay-cards {
@@ -274,6 +291,11 @@
                 display: grid;
                 gap: 1.6rem;
                 grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            }
+
+            .grid.classifications {
+                grid-template-columns: repeat(2, minmax(240px, 1fr));
+                grid-auto-rows: 1fr;
             }
 
             .card {
@@ -355,54 +377,11 @@
                 margin-bottom: 0.35rem;
             }
 
-            .timeline {
-                margin-top: 2.5rem;
-                display: grid;
-                gap: 1.2rem;
-            }
-
-            .timeline-item {
-                background: rgba(15, 23, 42, 0.6);
-                border: 1px solid rgba(59, 130, 246, 0.25);
-                border-radius: 1.25rem;
-                padding: 1.4rem 1.6rem;
-                display: grid;
-                gap: 0.6rem;
-            }
-
-            .timeline-item strong {
-                font-size: 1rem;
-                color: #e2e8f0;
-            }
-
-            .timeline-item span {
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 0.75rem;
-                color: rgba(148, 197, 255, 0.75);
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-            }
-
             footer {
                 padding: 2.5rem 0 3rem;
                 color: rgba(148, 163, 184, 0.75);
                 font-size: 0.85rem;
                 text-align: center;
-            }
-
-            @keyframes pulse {
-                0% {
-                    transform: scale(0.95) rotate(0deg);
-                    opacity: 0.6;
-                }
-                50% {
-                    transform: scale(1.1) rotate(2deg);
-                    opacity: 0.85;
-                }
-                100% {
-                    transform: scale(0.95) rotate(0deg);
-                    opacity: 0.6;
-                }
             }
 
             @media (max-width: 720px) {
@@ -455,7 +434,6 @@
                         <a href="#kemampuan">Kemampuan</a>
                         <a href="#peran">Peran</a>
                         <a href="#galeri">Galeri</a>
-                        <a href="#intel">Intel</a>
                     </nav>
                     <a class="cta" href="{{ url('/admin') }}">Masuk Portal Aman</a>
                 </div>
@@ -466,10 +444,9 @@
                     <div class="hero-grid">
                         <div>
                             <span class="pretitle">Portal Pelatihan Resmi</span>
-                            <h1>Cetak intel terbaik bersama INTELIX</h1>
+                            <h1>Cetak agen intel terbaik bersama INTELIX</h1>
                             <p class="lead">
-                                Gabungkan simulasi lapangan, analitik, dan kendali komando dalam satu platform.
-                                INTELIX menyelaraskan kurikulum intelijen, pengukuran kesiapan, dan koordinasi lintas detasemen agar misi strategis berjalan presisi.
+                                Gabungkan simulasi lapangan, analitik, dan kendali komando dalam satu platform. INTELIX menyelaraskan kurikulum intelijen, pengukuran kesiapan, dan koordinasi lintas detasemen agar misi strategis berjalan presisi.
                             </p>
                             <div class="actions">
                                 <a class="cta" href="{{ url('/admin') }}">Masuk Konsol Pelatihan</a>
@@ -478,26 +455,26 @@
                         </div>
                         <div class="hero-visual">
                             <div class="hero-overlay">
-                                <div class="role-tag">status intel langsung</div>
+                                <span class="status-tag">status latihan hari ini</span>
                                 <div class="overlay-cards">
                                     <div class="overlay-card">
-                                        <span>Operatif aktif</span>
-                                        <strong>156</strong>
-                                        <p>Beroperasi di 12 sel misi</p>
+                                        <span>Klasifikasi Aktif</span>
+                                        <strong>4</strong>
+                                        <p>Surveilans, Kontra Surveilans, Nubika, Digital Forensik</p>
                                     </div>
                                     <div class="overlay-card">
-                                        <span>Tingkat kesiapan</span>
-                                        <strong>92%</strong>
-                                        <p>Di atas target mingguan command</p>
+                                        <span>Instruktur On Duty</span>
+                                        <strong>3</strong>
+                                        <p>Siap membimbing sel latihan lintas detasemen</p>
                                     </div>
                                     <div class="overlay-card">
-                                        <span>Sinyal diproses</span>
-                                        <strong>4.3K</strong>
-                                        <p>Siap untuk analisis manusia</p>
+                                        <span>Tingkat Kelulusan</span>
+                                        <strong>87%</strong>
+                                        <p>Trainee lulus evaluasi modul minggu berjalan</p>
                                     </div>
                                 </div>
                                 <div class="overlay-status">
-                                    &gt; link.established :: command &gt;&gt; seluruh unit sinkron di kanal bravo-tujuh
+                                    &gt; broadcast :: command &gt;&gt; jadwalkan briefing lintas klasifikasi pukul 19:00 zulu
                                 </div>
                             </div>
                         </div>
@@ -507,41 +484,40 @@
                 <section id="kemampuan">
                     <div class="section-header">
                         <div>
-                            <h2>Kemampuan kelas misi</h2>
+                            <h2>Klasifikasi pelatihan intelijen</h2>
                             <p>
-                                Dari command center hingga latihan lapangan, INTELIX menyiapkan rantai pelatihan lengkap untuk melahirkan intel yang siap diterjunkan.
+                                INTELIX membangun jalur kompetensi terstruktur yang selaras dengan klasifikasi kursus resmi. Setiap klasifikasi diisi modul terkurasi yang lahir dari pengalaman lapangan para analis dan field coach.
                             </p>
                         </div>
                     </div>
-                    <div class="grid">
-                        <article class="card">
-                            <div class="role-tag">Command Center</div>
-                            <h3>Orkestrasi operasi realtime</h3>
-                            <p>
-                                Pantau KPI misi, sinkronkan detasemen, dan kirim arahan strategis dengan data lapangan terkini.
-                            </p>
-                        </article>
-                        <article class="card">
-                            <div class="role-tag">Field Training</div>
-                            <h3>Simulasi taktis adaptif</h3>
-                            <p>
-                                Rilis modul SIGINT, HUMINT, dan counter-surveillance dengan evaluasi otomatis per sel latihan.
-                            </p>
-                        </article>
-                        <article class="card">
-                            <div class="role-tag">Analytics</div>
-                            <h3>Intel analitik prediktif</h3>
-                            <p>
-                                Deteksi gap kesiapan, pola ancaman, dan rekomendasi tindakan cepat berbasis insight visual.
-                            </p>
-                        </article>
-                        <article class="card">
-                            <div class="role-tag">Security</div>
-                            <h3>Keamanan berlapis</h3>
-                            <p>
-                                Siap integrasi autentikasi tingkat tinggi, logging terpusat, dan audit trail atas seluruh aktivitas latihan.
-                            </p>
-                        </article>
+                    @php
+                        $classifications = [
+                            [
+                                'name' => 'Surveilans',
+                                'summary' => 'Teknik observasi tertutup, pengawasan target multi-sensor, dan koordinasi tim covert di medan perkotaan.',
+                            ],
+                            [
+                                'name' => 'Kontra Surveilans',
+                                'summary' => 'Deteksi dan netralisasi operasi musuh, penyusunan rute counter surveillance, serta penilaian risiko infiltrasi.',
+                            ],
+                            [
+                                'name' => 'Nubika',
+                                'summary' => 'Kesiapsiagaan ancaman nuklir, biologi, kimia; protokol mitigasi, dekontaminasi, dan koordinasi lintas instansi.',
+                            ],
+                            [
+                                'name' => 'Digital Forensik',
+                                'summary' => 'Eksplorasi jejak digital, reverse engineering, dan analitik siber untuk mendukung operasi intelijen modern.',
+                            ],
+                        ];
+                    @endphp
+                    <div class="grid classifications">
+                        @foreach ($classifications as $classification)
+                            <article class="card">
+                                <div class="role-tag">Klasifikasi Kursus</div>
+                                <h3>{{ $classification['name'] }}</h3>
+                                <p>{{ $classification['summary'] }}</p>
+                            </article>
+                        @endforeach
                     </div>
                 </section>
 
@@ -571,7 +547,7 @@
                         <article class="card">
                             <h3>Operative Trainee</h3>
                             <p>
-                                Ikuti modul yang terpersonalisasi, catat progres harian, dan siapkan diri menghadapi simulasi lapangan.
+                                Ikuti modul terpersonalisasi, catat progres harian, dan siapkan diri menghadapi simulasi lapangan.
                             </p>
                         </article>
                     </div>
@@ -588,21 +564,30 @@
                     </div>
                     <div class="image-grid">
                         <div class="image-card">
-                            <img src="https://images.unsplash.com/photo-1451187858446-ccc44e122ba8?auto=format&fit=crop&w=1000&q=80" alt="Pusat komando intelijen dengan layar data" />
+                            <img
+                                src="https://images.unsplash.com/photo-1624969862644-791f3dc98927?auto=format&fit=crop&w=1000&q=80"
+                                alt="Pusat komando intelijen dengan layar data"
+                            />
                             <div class="image-caption">
                                 <span>Command Room</span>
-                                Monitor taktis terintegrasi untuk pantau operasi lintas divisi.
+                                Monitor taktis terintegrasi memantau operasi lintas detasemen.
                             </div>
                         </div>
                         <div class="image-card">
-                            <img src="https://images.unsplash.com/photo-1525182008055-f88b95ff7980?auto=format&fit=crop&w=1000&q=80" alt="Analis intelijen sedang mengolah data" />
+                            <img
+                                src="https://images.unsplash.com/photo-1525182008055-f88b95ff7980?auto=format&fit=crop&w=1000&q=80"
+                                alt="Analis intelijen sedang mengolah data"
+                            />
                             <div class="image-caption">
                                 <span>Intel Analysis</span>
-                                Analis memverifikasi sinyal dan mengonversinya menjadi aksi lapangan.
+                                Analis memverifikasi sinyal dan konversi insight menjadi aksi lapangan.
                             </div>
                         </div>
                         <div class="image-card">
-                            <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1000&q=80" alt="Tim lapangan melakukan koordinasi digital" />
+                            <img
+                                src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1000&q=80"
+                                alt="Tim lapangan melakukan koordinasi digital"
+                            />
                             <div class="image-caption">
                                 <span>Field Simulation</span>
                                 Sel lapangan menjalankan skenario penyamaran dengan dukungan data realtime.
@@ -610,38 +595,10 @@
                         </div>
                     </div>
                 </section>
-
-                <section id="intel">
-                    <div class="section-header">
-                        <div>
-                            <h2>Intel feed harian</h2>
-                            <p>
-                                Rangkuman aktivitas terbaru memastikan setiap agen berada pada frekuensi yang sama sebelum operasi dimulai.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <span>07:15 zulu</span>
-                            <strong>Simulasi infiltrasi malam Shadow Unit Alpha mencatat keberhasilan 94 persen.</strong>
-                            <p>Catatan command: lakukan evaluasi eksfiltrasi tambahan sebelum briefing sore.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <span>09:40 zulu</span>
-                            <strong>Dossier Aurora Route disetujui untuk operasi lapangan.</strong>
-                            <p>Analis intel menandai dua anomali sinyal yang membutuhkan konfirmasi lapangan.</p>
-                        </div>
-                        <div class="timeline-item">
-                            <span>11:05 zulu</span>
-                            <strong>Sesi debrief lintas sel dijadwalkan ulang ke pukul 19:00.</strong>
-                            <p>Field coach akan memimpin ulasan strategi komunikasi covert tambahan.</p>
-                        </div>
-                    </div>
-                </section>
             </main>
 
             <footer>
-                INTELIX Portal Pelatihan Intelijen &middot; Percepat kesiapan. Amankan misi bangsa.
+                INTELIX &middot; Portal Pelatihan Intelijen Digital &middot; Percepat kesiapan. Amankan misi bangsa.
             </footer>
         </div>
     </body>
