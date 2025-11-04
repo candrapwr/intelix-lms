@@ -53,7 +53,6 @@ const emptyCourse = {
     status: 'draft',
     classification_id: '',
     duration_minutes: '',
-    category_id: '',
     instructor_id: '',
     short_description: '',
     description: '',
@@ -82,7 +81,6 @@ function normalizePayload(form) {
         short_description: form.short_description || undefined,
         description: form.description || undefined,
         duration_minutes: form.duration_minutes ? Number(form.duration_minutes) : undefined,
-        category_id: form.category_id ? Number(form.category_id) : undefined,
         instructor_id: form.instructor_id ? Number(form.instructor_id) : undefined,
         published_at: form.published_at ? new Date(form.published_at).toISOString() : undefined,
     };
@@ -96,6 +94,7 @@ export default function CourseListPage() {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ search: '', status: '', classification_id: '' });
     const [classifications, setClassifications] = useState([]);
+    const [instructors, setInstructors] = useState([]);
     const [page, setPage] = useState(1);
     const debouncedSearch = useDebounce(filters.search);
 
@@ -116,7 +115,19 @@ export default function CourseListPage() {
             }
         }
 
+        async function loadInstructors() {
+            try {
+                const response = await client.get('/instructors', {
+                    params: { per_page: 100 },
+                });
+                setInstructors(response.data.data ?? response.data ?? []);
+            } catch (error) {
+                pushError('Gagal memuat instruktur', error.response?.data?.message ?? error.message);
+            }
+        }
+
         loadClassifications();
+        loadInstructors();
     }, [pushError]);
 
     const fetchCourses = useCallback(
@@ -151,10 +162,12 @@ export default function CourseListPage() {
 
     const handleOpenCreate = () => {
         const defaultClassification = classifications.find((item) => item.is_active) ?? classifications[0];
+        const defaultInstructor = instructors[0];
         setEditingCourse(null);
         setForm({
             ...emptyCourse,
             classification_id: defaultClassification ? String(defaultClassification.id) : '',
+            instructor_id: defaultInstructor ? String(defaultInstructor.id) : '',
         });
         setModalOpen(true);
     };
@@ -163,6 +176,7 @@ export default function CourseListPage() {
         setEditingCourse(course);
         const classificationId =
             course.classification?.id ?? course.classification_id ?? '';
+        const instructorId = course.instructor?.id ?? course.instructor_id ?? '';
 
         setForm({
             title: course.title ?? '',
@@ -170,8 +184,7 @@ export default function CourseListPage() {
             status: course.status ?? 'draft',
             classification_id: classificationId ? String(classificationId) : '',
             duration_minutes: course.duration_minutes ?? '',
-            category_id: course.category?.id ?? course.category_id ?? '',
-            instructor_id: course.instructor?.id ?? course.instructor_id ?? '',
+            instructor_id: instructorId ? String(instructorId) : '',
             short_description: course.short_description ?? '',
             description: course.description ?? '',
             published_at: formatDateForInput(course.published_at),
@@ -228,6 +241,7 @@ export default function CourseListPage() {
                     <div style="text-align:left;display:grid;gap:0.6rem;font-size:0.92rem">
                         <div><strong>Status:</strong> ${escapeHtml(detail.status ?? '-')}</div>
                         <div><strong>Klasifikasi:</strong> ${escapeHtml(detail.classification?.name ?? '-')}</div>
+                        <div><strong>Instruktur:</strong> ${escapeHtml(detail.instructor?.name ?? '-')}</div>
                         <div><strong>Ringkasan:</strong><br>${escapeHtml(detail.short_description ?? 'Belum ada ringkasan.')}</div>
                         <div><strong>Deskripsi:</strong><br>${escapeHtml(detail.description ?? 'Belum ada deskripsi.')}</div>
                         <div><strong>Jumlah Section:</strong> ${sectionCount}</div>
@@ -357,8 +371,8 @@ export default function CourseListPage() {
                             <thead>
                                 <tr>
                                     <th>Title</th>
-                                    <th>Category</th>
                                     <th>Classification</th>
+                                    <th>Instructor</th>
                                     <th>Status</th>
                                     <th>Enrollments</th>
                                     <th>Actions</th>
@@ -375,12 +389,12 @@ export default function CourseListPage() {
                                                 {course.short_description || 'No description.'}
                                             </div>
                                         </td>
-                                        <td>{course.category?.name ?? '-'}</td>
                                         <td>
                                             <span className="chip">
                                                 {course.classification?.name ?? 'Unclassified'}
                                             </span>
                                         </td>
+                                        <td>{course.instructor?.name ?? '-'}</td>
                                         <td>
                                             <span
                                                 className={`badge ${
@@ -545,26 +559,22 @@ export default function CourseListPage() {
                         </div>
                     </div>
                     
-                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
                         <div className="form-field">
-                            <label htmlFor="category_id">Category ID</label>
-                            <input
-                                id="category_id"
-                                name="category_id"
-                                value={form.category_id}
-                                onChange={handleChange}
-                                placeholder="Optional"
-                            />
-                        </div>
-                        <div className="form-field">
-                            <label htmlFor="instructor_id">Instructor ID</label>
-                            <input
+                            <label htmlFor="instructor_id">Instructor</label>
+                            <select
                                 id="instructor_id"
                                 name="instructor_id"
                                 value={form.instructor_id}
                                 onChange={handleChange}
-                                placeholder="Optional"
-                            />
+                            >
+                                <option value="">Pilih instructor</option>
+                                {instructors.map((instructor) => (
+                                    <option key={instructor.id} value={instructor.id}>
+                                        {instructor.name} ({instructor.email})
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="form-field">
                             <label htmlFor="published_at">Publish Date</label>
