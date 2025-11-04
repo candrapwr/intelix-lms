@@ -88,6 +88,10 @@ class StudentCourseController extends Controller
         $course->load([
             'classification:id,name',
             'sections.materials',
+            'sections.quizzes.options',
+            'sections.quizAttempts' => fn ($query) => $query
+                ->where('user_id', $student->id)
+                ->with('answers'),
             'enrollments' => fn ($query) => $query->where('user_id', $student->id),
         ])->loadCount(['sections', 'modules']);
 

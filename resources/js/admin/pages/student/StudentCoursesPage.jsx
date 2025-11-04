@@ -33,12 +33,15 @@ function getCategoryColor(category) {
 }
 
 export default function StudentCoursesPage() {
-    const { pushError } = useNotification();
+    const { pushError, pushSuccess } = useNotification();
 
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [detailLoading, setDetailLoading] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
+    const [quizResponses, setQuizResponses] = useState({});
+    const [sectionSubmissions, setSectionSubmissions] = useState({});
+    const [submittingSectionId, setSubmittingSectionId] = useState(null);
 
     const fetchCourseDetail = useCallback(
         async (slug, showLoader = true) => {
@@ -53,7 +56,9 @@ export default function StudentCoursesPage() {
 
             try {
                 const response = await studentClient.get(`/my-courses/${slug}`);
-                setSelectedCourse(response.data.data ?? response.data ?? null);
+                const detail = response.data.data ?? response.data ?? null;
+                setSelectedCourse(detail);
+                setQuizResponses({});
             } catch (error) {
                 pushError('Gagal memuat detail kursus', error.response?.data?.message ?? error.message);
             } finally {
@@ -88,6 +93,39 @@ export default function StudentCoursesPage() {
         fetchCourses();
     }, [fetchCourses]);
 
+    useEffect(() => {
+        if (!selectedCourse) {
+            setQuizResponses({});
+            setSectionSubmissions({});
+            return;
+        }
+
+        const initialResponses = {};
+        const submissions = {};
+
+        (selectedCourse.sections ?? []).forEach((section) => {
+            const attempt = section.quiz_attempt;
+
+            if (!attempt) {
+                return;
+            }
+
+            submissions[section.id] = true;
+
+            (attempt.answers ?? []).forEach((answer) => {
+                initialResponses[answer.course_quiz_id] = {
+                    selectedOptionId: answer.course_quiz_option_id,
+                    selectedIndex: undefined,
+                    checked: true,
+                    isCorrect: answer.is_correct,
+                };
+            });
+        });
+
+        setQuizResponses(initialResponses);
+        setSectionSubmissions(submissions);
+    }, [selectedCourse]);
+
     const materialsTotal = useMemo(() => {
         if (!selectedCourse?.sections) return 0;
         return selectedCourse.sections.reduce(
@@ -95,6 +133,176 @@ export default function StudentCoursesPage() {
             0,
         );
     }, [selectedCourse]);
+
+    const quizzesTotal = useMemo(() => {
+        if (!selectedCourse?.sections) return 0;
+        return selectedCourse.sections.reduce(
+            (total, section) => total + (section.quizzes?.length ?? 0),
+            0,
+        );
+    }, [selectedCourse]);
+
+    const handleSelectQuizOption = (sectionId, quizId, optionId, optionIndex) => {
+        setQuizResponses((prev) => ({
+            ...prev,
+            [quizId]: {
+                ...(prev[quizId] ?? {}),
+                selectedOptionId: optionId,
+                selectedIndex: optionIndex,
+                checked: false,
+                isCorrect: null,
+            },
+        }));
+
+        setSectionSubmissions((prev) => ({
+            ...prev,
+            [sectionId]: false,
+        }));
+    };
+
+    const handleSubmitSectionQuizzes = async (section) => {
+        if (!section?.quizzes?.length) {
+            return;
+        }
+
+        const unanswered = section.quizzes.filter((quiz) => {
+            const response = quizResponses[quiz.id];
+            if (!response) return true;
+            return (
+                response.selectedOptionId === undefined &&
+                response.selectedIndex === undefined
+            );
+        });
+
+        if (unanswered.length > 0) {
+            pushError(
+                'Lengkapi jawaban',
+                'Silakan jawab semua pertanyaan sebelum menyelesaikan kuis.',
+            );
+            return;
+        }
+
+        const answersPayload = [];
+
+        try {
+            section.quizzes.forEach((quiz) => {
+                const response = quizResponses[quiz.id] ?? {};
+                let optionId = response.selectedOptionId;
+
+                if (
+                    (optionId === undefined || optionId === null) &&
+                    response.selectedIndex !== undefined &&
+                    response.selectedIndex !== null
+                ) {
+                    const optionFromIndex = quiz.options?.[response.selectedIndex];
+                    optionId = optionFromIndex?.id;
+                }
+
+                if (optionId === undefined || optionId === null) {
+                    throw new Error('UNANSWERED');
+                }
+
+                answersPayload.push({
+                    quiz_id: quiz.id,
+                    option_id: optionId,
+                });
+            });
+        } catch (_error) {
+            pushError('Jawaban tidak lengkap', 'Terdapat jawaban yang belum dipilih.');
+            return;
+        }
+
+        if (typeof window !== 'undefined') {
+            const confirmed = window.confirm(
+                'Selesaikan kuis sekarang? Jawaban akan disimpan permanen dan tidak dapat diubah.',
+            );
+
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        try {
+            setSubmittingSectionId(section.id);
+
+            const response = await studentClient.post(`/sections/${section.id}/quizzes/submit`, {
+                answers: answersPayload,
+            });
+
+            const payload = response.data ?? {};
+            const attempt = payload.data ?? payload;
+            const attemptAnswers = attempt.answers ?? [];
+
+            setQuizResponses((prev) => {
+                const next = { ...prev };
+                attemptAnswers.forEach((answer) => {
+                    next[answer.course_quiz_id] = {
+                        selectedOptionId: answer.course_quiz_option_id,
+                        selectedIndex: undefined,
+                        checked: true,
+                        isCorrect: answer.is_correct,
+                    };
+                });
+                return next;
+            });
+
+            setSectionSubmissions((prev) => ({
+                ...prev,
+                [section.id]: true,
+            }));
+
+            if (selectedCourse?.slug) {
+                await fetchCourseDetail(selectedCourse.slug, false);
+            }
+
+            const totalQuestions = attempt.total_questions ?? section.quizzes.length;
+            const correctAnswers = attempt.correct_answers ?? 0;
+            const message =
+                payload.message ??
+                `Anda menjawab ${correctAnswers} dari ${totalQuestions} soal dengan benar.`;
+
+            pushSuccess('Kuis diselesaikan', message);
+        } catch (error) {
+            if (error.response?.status === 409) {
+                const payload = error.response.data ?? {};
+                const attempt = payload.data ?? payload;
+                const attemptAnswers = attempt.answers ?? [];
+
+                setQuizResponses((prev) => {
+                    const next = { ...prev };
+                    attemptAnswers.forEach((answer) => {
+                        next[answer.course_quiz_id] = {
+                            selectedOptionId: answer.course_quiz_option_id,
+                            selectedIndex: undefined,
+                            checked: true,
+                            isCorrect: answer.is_correct,
+                        };
+                    });
+                    return next;
+                });
+
+                setSectionSubmissions((prev) => ({
+                    ...prev,
+                    [section.id]: true,
+                }));
+
+                const totalQuestions = attempt.total_questions ?? section.quizzes.length;
+                const correctAnswers = attempt.correct_answers ?? 0;
+                pushError(
+                    'Kuis sudah diselesaikan',
+                    `Anda sebelumnya menjawab ${correctAnswers} dari ${totalQuestions} soal dengan benar.`,
+                );
+                return;
+            }
+
+            pushError(
+                'Gagal menyelesaikan kuis',
+                error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan.',
+            );
+        } finally {
+            setSubmittingSectionId(null);
+        }
+    };
 
     return (
         <div className="student-dashboard-compact">
@@ -207,6 +415,10 @@ export default function StudentCoursesPage() {
                                         <span className="stat-icon">📄</span>
                                         <span>{materialsTotal} materi</span>
                                     </div>
+                                    <div className="stat-item">
+                                        <span className="stat-icon">📝</span>
+                                        <span>{quizzesTotal} kuis</span>
+                                    </div>
                                     {selectedCourse.enrollment?.enrolled_at ? (
                                         <div className="stat-item">
                                             <span className="stat-icon">📅</span>
@@ -264,6 +476,169 @@ export default function StudentCoursesPage() {
                                                 </ul>
                                             ) : (
                                                 <div className="empty-material-compact">Belum ada materi.</div>
+                                            )}
+                                            {section.quizzes?.length ? (() => {
+                                                const sectionSubmitted = sectionSubmissions[section.id] === true;
+                                                const allAnswered = section.quizzes.every((quiz) => {
+                                                    const response = quizResponses[quiz.id];
+                                                    if (!response) return false;
+                                                    return (
+                                                        response.selectedOptionId !== undefined ||
+                                                        response.selectedIndex !== undefined
+                                                    );
+                                                });
+                                                const computedCorrectCount = section.quizzes.reduce((total, quiz) => {
+                                                    const response = quizResponses[quiz.id];
+                                                    if (!response?.isCorrect) {
+                                                        return total;
+                                                    }
+                                                    return total + 1;
+                                                }, 0);
+                                                const attempt = section.quiz_attempt;
+                                                const totalQuestions = attempt?.total_questions ?? section.quizzes.length;
+                                                const correctCount = attempt?.correct_answers ?? computedCorrectCount;
+                                                const isLocked = sectionSubmitted || submittingSectionId === section.id;
+
+                                                return (
+                                                    <div className="quiz-list-compact">
+                                                        <div className="quiz-list-header">
+                                                            <h4>Latihan Kuis</h4>
+                                                        </div>
+                                                        {section.quizzes.map((quiz, quizIndex) => {
+                                                            const quizState = quizResponses[quiz.id] ?? {};
+
+                                                            return (
+                                                                <div key={quiz.id} className="quiz-card-compact">
+                                                                    <div className="quiz-header">
+                                                                        <div>
+                                                                            <div className="quiz-title">
+                                                                                {`Kuis ${quizIndex + 1}`}
+                                                                                {quiz.sort_order !== null &&
+                                                                                quiz.sort_order !== undefined ? (
+                                                                                    <span className="order-badge soft">
+                                                                                        Urutan {quiz.sort_order}
+                                                                                    </span>
+                                                                                ) : null}
+                                                                            </div>
+                                                                            <p className="quiz-question">{quiz.question}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    {quiz.options?.length ? (
+                                                                        <ul className="quiz-options-list">
+                                                                            {quiz.options.map((option, optionIndex) => {
+                                                                                const hasOptionId =
+                                                                                    option?.id !== undefined && option?.id !== null;
+                                                                                const isSelected = hasOptionId
+                                                                                    ? quizState.selectedOptionId === option.id
+                                                                                    : quizState.selectedIndex === optionIndex;
+                                                                                const optionClassNames = ['quiz-option-item'];
+
+                                                                                if (isSelected) {
+                                                                                    optionClassNames.push('selected');
+                                                                                }
+
+                                                                                if (sectionSubmitted && quizState.checked && option.is_correct) {
+                                                                                    optionClassNames.push('correct');
+                                                                                }
+
+                                                                                if (
+                                                                                    sectionSubmitted &&
+                                                                                    quizState.checked &&
+                                                                                    isSelected &&
+                                                                                    !option.is_correct
+                                                                                ) {
+                                                                                    optionClassNames.push('incorrect');
+                                                                                }
+
+                                                                                return (
+                                                                                    <li
+                                                                                        key={option.id ?? optionIndex}
+                                                                                        className={optionClassNames.join(' ')}
+                                                                                    >
+                                                                                        <label className="quiz-option-label">
+                                                                                            <input
+                                                                                                type="radio"
+                                                                                                name={`quiz-${quiz.id}`}
+                                                                                                value={hasOptionId ? option.id : optionIndex}
+                                                                                                checked={isSelected}
+                                                                                                disabled={isLocked}
+                                                                                                onChange={() =>
+                                                                                                    handleSelectQuizOption(
+                                                                                                        section.id,
+                                                                                                        quiz.id,
+                                                                                                        hasOptionId ? option.id : optionIndex,
+                                                                                                        optionIndex,
+                                                                                                    )
+                                                                                                }
+                                                                                            />
+                                                                                            <span className="quiz-option-text">
+                                                                                                <span className="quiz-option-letter">
+                                                                                                    {String.fromCharCode(65 + optionIndex)}.
+                                                                                                </span>
+                                                                                                {option.text}
+                                                                                            </span>
+                                                                                        </label>
+                                                                                    </li>
+                                                                                );
+                                                                            })}
+                                                                        </ul>
+                                                                    ) : (
+                                                                        <div className="empty-quiz-options">
+                                                                            Belum ada pilihan jawaban pada kuis ini.
+                                                                        </div>
+                                                                    )}
+                                                                    {sectionSubmitted && quizState.checked ? (
+                                                                        <div
+                                                                            className={`quiz-feedback ${
+                                                                                quizState.isCorrect ? 'correct' : 'incorrect'
+                                                                            }`}
+                                                                        >
+                                                                            <strong>
+                                                                                {quizState.isCorrect
+                                                                                    ? 'Jawaban benar! 🎉'
+                                                                                    : 'Jawaban belum tepat. Pelajari kembali materi.'}
+                                                                            </strong>
+                                                                            {quiz.explanation ? (
+                                                                                <p className="quiz-explanation">
+                                                                                    Penjelasan: {quiz.explanation}
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <div className="quiz-section-actions">
+                                                            <button
+                                                                type="button"
+                                                                className="quiz-submit-button"
+                                                                onClick={() => handleSubmitSectionQuizzes(section)}
+                                                                disabled={
+                                                                    !allAnswered ||
+                                                                    sectionSubmitted ||
+                                                                    submittingSectionId === section.id
+                                                                }
+                                                            >
+                                                                Selesaikan Kuis
+                                                            </button>
+                                                            {!allAnswered && !sectionSubmitted ? (
+                                                                <p className="quiz-section-hint">
+                                                                    Jawab semua pertanyaan untuk melihat evaluasi.
+                                                                </p>
+                                                            ) : null}
+                                                            {sectionSubmitted ? (
+                                                                <div className="quiz-summary">
+                                                                    <strong>Rekap:</strong>{' '}
+                                                                    {correctCount} dari {totalQuestions} jawaban benar.
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })() : (
+                                                <div className="empty-quiz-compact">
+                                                    Belum ada kuis pada section ini.
+                                                </div>
                                             )}
                                         </div>
                                     ))}

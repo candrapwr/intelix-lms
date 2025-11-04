@@ -16,7 +16,7 @@ class CourseSectionController extends Controller
     public function index(Course $course): ResourceCollection
     {
         $sections = $course->sections()
-            ->with('materials')
+            ->with(['materials', 'quizzes.options'])
             ->orderBy('sort_order')
             ->orderBy('created_at')
             ->get();
@@ -36,14 +36,14 @@ class CourseSectionController extends Controller
 
         $section = $course->sections()->create($payload);
 
-        return (new CourseSectionResource($section->load('materials')))
+        return (new CourseSectionResource($section->load(['materials', 'quizzes.options'])))
             ->response()
             ->setStatusCode(201);
     }
 
     public function show(CourseSection $section): CourseSectionResource
     {
-        return new CourseSectionResource($section->load('materials'));
+        return new CourseSectionResource($section->load(['materials', 'quizzes.options']));
     }
 
     public function update(UpdateCourseSectionRequest $request, CourseSection $section): CourseSectionResource
@@ -56,7 +56,7 @@ class CourseSectionController extends Controller
 
         $section->update($data);
 
-        return new CourseSectionResource($section->refresh()->load('materials'));
+        return new CourseSectionResource($section->refresh()->load(['materials', 'quizzes.options']));
     }
 
     public function destroy(CourseSection $section): JsonResponse

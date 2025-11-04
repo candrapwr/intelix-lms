@@ -21,6 +21,12 @@ class CourseSectionResource extends JsonResource
             'summary' => $this->summary,
             'sort_order' => $this->sort_order,
             'materials' => CourseMaterialResource::collection($this->whenLoaded('materials')),
+            'quizzes' => CourseQuizResource::collection($this->whenLoaded('quizzes')),
+            'quiz_attempt' => $this->whenLoaded('quizAttempts', function () {
+                $attempt = $this->quizAttempts->first();
+
+                return $attempt ? new CourseQuizAttemptResource($attempt) : null;
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

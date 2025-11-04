@@ -30,7 +30,7 @@ class InstructorCourseSectionController extends Controller
 
         $section = $course->sections()->create($payload);
 
-        return (new CourseSectionResource($section->load('materials')))
+        return (new CourseSectionResource($section->load(['materials', 'quizzes.options'])))
             ->response()
             ->setStatusCode(201);
     }
@@ -50,7 +50,7 @@ class InstructorCourseSectionController extends Controller
 
         $section->update($data);
 
-        return new CourseSectionResource($section->refresh()->load('materials'));
+        return new CourseSectionResource($section->refresh()->load(['materials', 'quizzes.options']));
     }
 
     public function destroy(Request $request, CourseSection $section): JsonResponse

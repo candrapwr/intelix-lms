@@ -28,6 +28,18 @@ const FileIcon = () => (
     </svg>
 );
 
+const QuizIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="20" height="20">
+        <path d="M8 5h8" strokeLinecap="round" />
+        <path d="M10 9h6" strokeLinecap="round" />
+        <path d="M6 9h1" strokeLinecap="round" />
+        <path d="M6 13h8" strokeLinecap="round" />
+        <path d="M6 17h4" strokeLinecap="round" />
+        <path d="M15 16l2 2 3-3" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+    </svg>
+);
+
 const DownloadIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" width="20" height="20">
         <path d="M12 3v12" strokeLinecap="round" />
@@ -65,6 +77,23 @@ const emptyMaterial = {
     file: null,
 };
 
+const MIN_QUIZ_OPTIONS = 2;
+const MAX_QUIZ_OPTIONS = 10;
+
+function createEmptyQuizForm() {
+    return {
+        question: '',
+        explanation: '',
+        sort_order: '',
+        options: [
+            { text: '', is_correct: true },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+        ],
+    };
+}
+
 function normalizeSectionPayload(form) {
     return {
         title: form.title,
@@ -73,6 +102,29 @@ function normalizeSectionPayload(form) {
             form.sort_order === '' || Number.isNaN(Number(form.sort_order))
                 ? undefined
                 : Number(form.sort_order),
+    };
+}
+
+function normalizeQuizPayload(form) {
+    const filteredOptions = form.options
+        .map((option) => ({
+            text: option.text?.trim() ?? '',
+            is_correct: option.is_correct === true,
+        }))
+        .filter((option) => option.text !== '');
+
+    return {
+        question: form.question.trim(),
+        explanation: form.explanation?.trim() ? form.explanation.trim() : undefined,
+        sort_order:
+            form.sort_order === '' || Number.isNaN(Number(form.sort_order))
+                ? undefined
+                : Number(form.sort_order),
+        options: filteredOptions.map((option, index) => ({
+            label: String.fromCharCode(65 + index),
+            text: option.text,
+            is_correct: option.is_correct === true,
+        })),
     };
 }
 
@@ -104,6 +156,11 @@ export default function CourseSectionsPage() {
     const [materialForm, setMaterialForm] = useState(emptyMaterial);
     const [materialSection, setMaterialSection] = useState(null);
     const [editingMaterial, setEditingMaterial] = useState(null);
+
+    const [quizModalOpen, setQuizModalOpen] = useState(false);
+    const [quizForm, setQuizForm] = useState(() => createEmptyQuizForm());
+    const [quizSection, setQuizSection] = useState(null);
+    const [editingQuiz, setEditingQuiz] = useState(null);
 
     const fetchCourse = useCallback(async () => {
         setLoading(true);
@@ -303,6 +360,178 @@ export default function CourseSectionsPage() {
         }
     };
 
+    const handleOpenQuizModal = (section, quiz = null) => {
+        setQuizSection(section);
+        setEditingQuiz(quiz);
+
+        if (quiz) {
+            const filledOptions = (quiz.options ?? []).map((option) => ({
+                text: option.text ?? '',
+                is_correct: option.is_correct ?? false,
+            }));
+
+            while (filledOptions.length < MIN_QUIZ_OPTIONS) {
+                filledOptions.push({ text: '', is_correct: false });
+            }
+
+            setQuizForm({
+                question: quiz.question ?? '',
+                explanation: quiz.explanation ?? '',
+                sort_order:
+                    quiz.sort_order === null || quiz.sort_order === undefined ? '' : quiz.sort_order,
+                options: filledOptions,
+            });
+        } else {
+            setQuizForm(createEmptyQuizForm());
+        }
+
+        setQuizModalOpen(true);
+    };
+
+    const handleQuizInputChange = (event) => {
+        const { name, value } = event.target;
+        setQuizForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleQuizOptionChange = (index, value) => {
+        setQuizForm((prev) => {
+            const nextOptions = prev.options.map((option, optionIndex) =>
+                optionIndex === index
+                    ? {
+                          ...option,
+                          text: value,
+                      }
+                    : option,
+            );
+
+            return {
+                ...prev,
+                options: nextOptions,
+            };
+        });
+    };
+
+    const handleSetCorrectOption = (index) => {
+        setQuizForm((prev) => ({
+            ...prev,
+            options: prev.options.map((option, optionIndex) => ({
+                ...option,
+                is_correct: optionIndex === index,
+            })),
+        }));
+    };
+
+    const handleAddQuizOption = () => {
+        if (quizForm.options.length >= MAX_QUIZ_OPTIONS) {
+            pushError(
+                'Batas pilihan tercapai',
+                `Setiap kuis maksimal memiliki ${MAX_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        setQuizForm((prev) => ({
+            ...prev,
+            options: [...prev.options, { text: '', is_correct: false }],
+        }));
+    };
+
+    const handleRemoveQuizOption = (index) => {
+        if (quizForm.options.length <= MIN_QUIZ_OPTIONS) {
+            pushError(
+                'Jumlah pilihan minimal',
+                `Setiap kuis memerlukan minimal ${MIN_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        setQuizForm((prev) => ({
+            ...prev,
+            options: prev.options.filter((_, optionIndex) => optionIndex !== index),
+        }));
+    };
+
+    const handleSaveQuiz = async (event) => {
+        event.preventDefault();
+        if (!quizSection) {
+            pushError('Tidak ada section', 'Pilih section sebelum menambahkan kuis.');
+            return;
+        }
+
+        if (!quizForm.question.trim()) {
+            pushError('Pertanyaan diperlukan', 'Isi pertanyaan kuis sebelum menyimpan.');
+            return;
+        }
+
+        const payload = normalizeQuizPayload(quizForm);
+
+        if (payload.options.length < MIN_QUIZ_OPTIONS) {
+            pushError(
+                'Pilihan belum lengkap',
+                `Minimal terdapat ${MIN_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        if (!payload.options.some((option) => option.is_correct)) {
+            pushError('Tidak ada kunci jawaban', 'Tandai salah satu pilihan sebagai jawaban benar.');
+            return;
+        }
+
+        try {
+            if (editingQuiz) {
+                await client.patch(`/quizzes/${editingQuiz.id}`, payload);
+                pushSuccess('Kuis diperbarui', 'Data kuis berhasil disimpan.');
+            } else {
+                await client.post(`/sections/${quizSection.id}/quizzes`, payload);
+                pushSuccess('Kuis dibuat', 'Kuis baru berhasil ditambahkan.');
+            }
+            handleCloseQuizModal();
+            fetchCourse();
+        } catch (error) {
+            pushError(
+                'Gagal menyimpan kuis',
+                error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan.',
+            );
+        }
+    };
+
+    const handleDeleteQuiz = async (quiz) => {
+        const result = await Swal.fire({
+            title: 'Hapus kuis?',
+            text: `Kuis "${quiz.question}" akan dihapus permanen.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Hapus',
+            cancelButtonText: 'Batal',
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await client.delete(`/quizzes/${quiz.id}`);
+            pushSuccess('Kuis dihapus', 'Kuis berhasil dihapus.');
+            fetchCourse();
+        } catch (error) {
+            pushError(
+                'Gagal menghapus kuis',
+                error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan.',
+            );
+        }
+    };
+
+    const handleCloseQuizModal = () => {
+        setQuizModalOpen(false);
+        setQuizSection(null);
+        setEditingQuiz(null);
+        setQuizForm(createEmptyQuizForm());
+    };
+
     const sectionsSummary = useMemo(() => {
         if (!sections.length) return 'Belum ada section pada kursus ini.';
         return `${sections.length} section`;
@@ -382,6 +611,14 @@ export default function CourseSectionsPage() {
                                     <button
                                         type="button"
                                         className="btn btn-ghost btn-icon"
+                                        onClick={() => handleOpenQuizModal(section)}
+                                        title="Tambah kuis"
+                                    >
+                                        <QuizIcon />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-ghost btn-icon"
                                         onClick={() => handleOpenMaterialModal(section)}
                                         title="Tambah materi"
                                     >
@@ -405,116 +642,236 @@ export default function CourseSectionsPage() {
                                     </button>
                                 </div>
                             </div>
-                            <div>
-                                {section.materials?.length ? (
-                                    <div style={{ display: 'grid', gap: '0.8rem' }}>
-                                        {section.materials.map((material) => (
-                                            <div
-                                                key={material.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'flex-start',
-                                                    justifyContent: 'space-between',
-                                                    gap: '0.8rem',
-                                                    padding: '0.75rem',
-                                                    borderRadius: '0.6rem',
-                                                    border: '1px solid rgba(148, 163, 184, 0.25)',
-                                                    background: 'rgba(248, 250, 252, 0.7)',
-                                                }}
-                                            >
-                                                <div style={{ display: 'grid', gap: '0.3rem', flex: 1 }}>
-                                                    <div
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.4rem',
-                                                            fontWeight: 600,
-                                                            color: '#0f172a',
-                                                        }}
-                                                    >
-                                                        <FileIcon />{' '}
-                                                        <span>{material.title ?? material.file_name}</span>
-                                                    </div>
-                                                    <div
-                                                        style={{
-                                                            display: 'flex',
-                                                            flexWrap: 'wrap',
-                                                            gap: '0.3rem',
-                                                            fontSize: '0.75rem',
-                                                            color: '#64748b',
-                                                        }}
-                                                    >
-                                                        <span>{material.file_name}</span>
-                                                        <span>•</span>
-                                                        <span>{formatFileSize(material.file_size)}</span>
-                                                        {material.sort_order !== null &&
-                                                        material.sort_order !== undefined ? (
-                                                            <>
-                                                                <span>•</span>
-                                                                <span>Urutan {material.sort_order}</span>
-                                                            </>
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                <div style={{ display: 'grid', gap: '0.4rem' }}>
+                                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1e293b' }}>
+                                        Materi Section
+                                    </div>
+                                    {section.materials?.length ? (
+                                        <div style={{ display: 'grid', gap: '0.8rem' }}>
+                                            {section.materials.map((material) => (
+                                                <div
+                                                    key={material.id}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'flex-start',
+                                                        justifyContent: 'space-between',
+                                                        gap: '0.8rem',
+                                                        padding: '0.75rem',
+                                                        borderRadius: '0.6rem',
+                                                        border: '1px solid rgba(148, 163, 184, 0.25)',
+                                                        background: 'rgba(248, 250, 252, 0.7)',
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'grid', gap: '0.3rem', flex: 1 }}>
+                                                        <div
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.4rem',
+                                                                fontWeight: 600,
+                                                                color: '#0f172a',
+                                                            }}
+                                                        >
+                                                            <FileIcon />{' '}
+                                                            <span>{material.title ?? material.file_name}</span>
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                display: 'flex',
+                                                                flexWrap: 'wrap',
+                                                                gap: '0.3rem',
+                                                                fontSize: '0.75rem',
+                                                                color: '#64748b',
+                                                            }}
+                                                        >
+                                                            <span>{material.file_name}</span>
+                                                            <span>•</span>
+                                                            <span>{formatFileSize(material.file_size)}</span>
+                                                            {material.sort_order !== null &&
+                                                            material.sort_order !== undefined ? (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span>Urutan {material.sort_order}</span>
+                                                                </>
+                                                            ) : null}
+                                                        </div>
+                                                        {material.description ? (
+                                                            <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                                                                {material.description}
+                                                            </div>
                                                         ) : null}
                                                     </div>
-                                                        {material.description ? (
+                                                    <div className="table-actions" style={{ alignSelf: 'center' }}>
+                                                        {material.file_url ? (
+                                                            <a
+                                                                href={material.file_url}
+                                                                className="btn btn-ghost btn-icon"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title="Unduh materi"
+                                                            >
+                                                                <DownloadIcon />
+                                                            </a>
+                                                        ) : null}
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-ghost btn-icon"
+                                                            onClick={() => handleOpenMaterialModal(section, material)}
+                                                            title="Edit materi"
+                                                        >
+                                                            <EditIcon />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-danger btn-icon"
+                                                            onClick={() => handleDeleteMaterial(material)}
+                                                            title="Hapus materi"
+                                                        >
+                                                            <DeleteIcon />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="surface-subtitle" style={{ fontSize: '0.82rem' }}>
+                                            Belum ada materi pada section ini.
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ display: 'grid', gap: '0.4rem' }}>
+                                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#1e293b' }}>
+                                        Kuis Section
+                                    </div>
+                                    {section.quizzes?.length ? (
+                                        <div style={{ display: 'grid', gap: '0.8rem' }}>
+                                            {section.quizzes.map((quiz, quizIndex) => (
+                                                <div
+                                                    key={quiz.id}
+                                                    style={{
+                                                        display: 'grid',
+                                                        gap: '0.5rem',
+                                                        padding: '0.75rem',
+                                                        borderRadius: '0.6rem',
+                                                        border: '1px solid rgba(148, 163, 184, 0.25)',
+                                                        background: 'rgba(248, 250, 252, 0.55)',
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'flex-start',
+                                                            gap: '0.8rem',
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'grid', gap: '0.3rem' }}>
+                                                            <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                                                                {`Kuis ${quizIndex + 1}`}
+                                                                {quiz.sort_order !== null &&
+                                                                quiz.sort_order !== undefined ? (
+                                                                    <span className="chip" style={{ marginLeft: '0.4rem' }}>
+                                                                        Urutan {quiz.sort_order}
+                                                                    </span>
+                                                                ) : null}
+                                                            </div>
+                                                            <div style={{ color: '#0f172a' }}>{quiz.question}</div>
+                                                        </div>
+                                                        <div className="table-actions">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-ghost btn-icon"
+                                                                onClick={() => handleOpenQuizModal(section, quiz)}
+                                                                title="Edit kuis"
+                                                            >
+                                                                <EditIcon />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-danger btn-icon"
+                                                                onClick={() => handleDeleteQuiz(quiz)}
+                                                                title="Hapus kuis"
+                                                            >
+                                                                <DeleteIcon />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <ul
+                                                        style={{
+                                                            listStyle: 'none',
+                                                            margin: 0,
+                                                            padding: 0,
+                                                            display: 'grid',
+                                                            gap: '0.4rem',
+                                                        }}
+                                                    >
+                                                        {quiz.options?.length ? (
+                                                            quiz.options.map((option, optionIndex) => (
+                                                                <li
+                                                                    key={option.id ?? optionIndex}
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'center',
+                                                                        gap: '0.6rem',
+                                                                        padding: '0.45rem 0.55rem',
+                                                                        borderRadius: '0.45rem',
+                                                                        background: option.is_correct
+                                                                            ? 'rgba(34, 197, 94, 0.12)'
+                                                                            : 'rgba(241, 245, 249, 0.6)',
+                                                                    }}
+                                                                >
+                                                                    <div
+                                                                        style={{
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '0.45rem',
+                                                                            color: '#0f172a',
+                                                                        }}
+                                                                    >
+                                                                        <span style={{ fontWeight: 600 }}>
+                                                                            {String.fromCharCode(65 + optionIndex)}.
+                                                                        </span>
+                                                                        <span>{option.text}</span>
+                                                                    </div>
+                                                                    {option.is_correct ? (
+                                                                        <span
+                                                                            className="chip"
+                                                                            style={{
+                                                                                background: 'rgba(34, 197, 94, 0.18)',
+                                                                                color: '#15803d',
+                                                                                border: 'none',
+                                                                            }}
+                                                                        >
+                                                                            Benar
+                                                                        </span>
+                                                                    ) : null}
+                                                                </li>
+                                                            ))
+                                                        ) : (
+                                                            <li
+                                                                className="surface-subtitle"
+                                                                style={{ fontSize: '0.8rem' }}
+                                                            >
+                                                                Belum ada pilihan jawaban.
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                    {quiz.explanation ? (
                                                         <div style={{ fontSize: '0.8rem', color: '#475569' }}>
-                                                            {material.description}
+                                                            Catatan: {quiz.explanation}
                                                         </div>
                                                     ) : null}
                                                 </div>
-                                                <div className="table-actions" style={{ alignSelf: 'center' }}>
-                                                    {material.file_url ? (
-                                                        <a
-                                                            href={material.file_url}
-                                                            className="btn btn-ghost btn-icon"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            title="Unduh materi"
-                                                        >
-                                                            <DownloadIcon />
-                                                        </a>
-                                                    ) : null}
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-ghost btn-icon"
-                                                        onClick={() => handleOpenMaterialModal(section, material)}
-                                                        title="Edit materi"
-                                                    >
-                                                        <EditIcon />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-danger btn-icon"
-                                                        onClick={() => handleDeleteMaterial(material)}
-                                                        title="Hapus materi"
-                                                    >
-                                                        <DeleteIcon />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div
-                                        style={{
-                                            display: 'grid',
-                                            gap: '0.4rem',
-                                            textAlign: 'center',
-                                            padding: '0.8rem',
-                                            borderRadius: '0.6rem',
-                                            border: '1px dashed rgba(148, 163, 184, 0.4)',
-                                            background: 'rgba(226, 232, 240, 0.2)',
-                                        }}
-                                    >
-                                        <p>Belum ada materi pada section ini.</p>
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost"
-                                            onClick={() => handleOpenMaterialModal(section)}
-                                        >
-                                            Tambah Materi
-                                        </button>
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="surface-subtitle" style={{ fontSize: '0.82rem' }}>
+                                            Belum ada kuis pada section ini.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -647,6 +1004,146 @@ export default function CourseSectionsPage() {
                             {formatFileSize(editingMaterial.file_size)})
                         </p>
                     ) : null}
+                </form>
+            </Modal>
+
+            <Modal
+                open={quizModalOpen}
+                onClose={handleCloseQuizModal}
+                title={editingQuiz ? 'Edit Kuis' : 'Kuis Baru'}
+                description={
+                    quizSection ? `Section: ${quizSection.title}` : 'Pilih section untuk menambahkan kuis.'
+                }
+                footer={
+                    <>
+                        <button type="button" className="btn btn-ghost" onClick={handleCloseQuizModal}>
+                            Batal
+                        </button>
+                        <button type="submit" form="quiz-form" className="btn btn-primary">
+                            Simpan Kuis
+                        </button>
+                    </>
+                }
+            >
+                <form id="quiz-form" className="form-grid" onSubmit={handleSaveQuiz}>
+                    <div className="form-field">
+                        <label htmlFor="quiz-question">Pertanyaan</label>
+                        <textarea
+                            id="quiz-question"
+                            name="question"
+                            rows={3}
+                            value={quizForm.question}
+                            onChange={handleQuizInputChange}
+                            placeholder="Tuliskan pertanyaan pilihan ganda"
+                            required
+                        />
+                    </div>
+                    <div className="form-field">
+                        <label htmlFor="quiz-explanation">Penjelasan (opsional)</label>
+                        <textarea
+                            id="quiz-explanation"
+                            name="explanation"
+                            rows={2}
+                            value={quizForm.explanation}
+                            onChange={handleQuizInputChange}
+                            placeholder="Opsional, tambahkan penjelasan atau pembahasan singkat"
+                        />
+                    </div>
+                    <div className="form-field">
+                        <label htmlFor="quiz-sort">Urutan</label>
+                        <input
+                            id="quiz-sort"
+                            name="sort_order"
+                            type="number"
+                            min="0"
+                            value={quizForm.sort_order}
+                            onChange={handleQuizInputChange}
+                            placeholder="Biarkan kosong untuk otomatis"
+                        />
+                    </div>
+                    <div style={{ display: 'grid', gap: '0.6rem' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.8rem',
+                                flexWrap: 'wrap',
+                            }}
+                        >
+                            <span style={{ fontWeight: 600, color: '#0f172a' }}>Pilihan Jawaban</span>
+                            <button
+                                type="button"
+                                className="btn btn-ghost"
+                                onClick={handleAddQuizOption}
+                                disabled={quizForm.options.length >= MAX_QUIZ_OPTIONS}
+                            >
+                                Tambah Pilihan
+                            </button>
+                        </div>
+                        {quizForm.options.map((option, index) => {
+                            const label = String.fromCharCode(65 + index);
+                            return (
+                                <div
+                                    key={index}
+                                    className="surface-minor"
+                                    style={{ display: 'grid', gap: '0.6rem', padding: '0.75rem' }}
+                                >
+                                    <div className="form-field">
+                                        <label htmlFor={`quiz-option-${index}`}>Pilihan {label}</label>
+                                        <input
+                                            id={`quiz-option-${index}`}
+                                            value={option.text}
+                                            onChange={(event) => handleQuizOptionChange(index, event.target.value)}
+                                            placeholder={`Jawaban ${label}`}
+                                            required
+                                        />
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '0.6rem',
+                                            flexWrap: 'wrap',
+                                        }}
+                                    >
+                                        <label
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.35rem',
+                                                fontSize: '0.85rem',
+                                                color: '#0f172a',
+                                            }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="quiz-correct"
+                                                checked={option.is_correct}
+                                                onChange={() => handleSetCorrectOption(index)}
+                                            />
+                                            <span>Tandai sebagai jawaban benar</span>
+                                        </label>
+                                        {quizForm.options.length > MIN_QUIZ_OPTIONS ? (
+                                            <button
+                                                type="button"
+                                                className="btn btn-ghost"
+                                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                                                onClick={() => handleRemoveQuizOption(index)}
+                                            >
+                                                Hapus
+                                            </button>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            Minimal {MIN_QUIZ_OPTIONS} pilihan dan maksimal {MAX_QUIZ_OPTIONS}. Pastikan salah satu
+                            pilihan ditandai sebagai jawaban benar.
+                        </p>
+                    </div>
                 </form>
             </Modal>
         </>

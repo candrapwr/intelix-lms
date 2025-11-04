@@ -775,6 +775,11 @@
     white-space: nowrap;
 }
 
+.order-badge.soft {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0369a1;
+}
+
 /* Material List */
 .material-list-compact {
     display: flex;
@@ -839,6 +844,191 @@
     text-align: center;
     color: #64748b;
     font-size: 0.85rem;
+}
+
+.quiz-list-compact {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.quiz-list-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.quiz-card-compact {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(248, 250, 252, 0.92);
+    box-shadow: 0 10px 22px -16px rgba(15, 23, 42, 0.35);
+}
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.quiz-title {
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quiz-question {
+    margin: 0.25rem 0 0;
+    color: #1e293b;
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
+
+.quiz-options-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+}
+
+.quiz-option-item {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.9);
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quiz-option-item:hover {
+    border-color: rgba(99, 102, 241, 0.55);
+    box-shadow: 0 12px 22px -18px rgba(99, 102, 241, 0.55);
+}
+
+.quiz-option-item.selected {
+    border-color: rgba(99, 102, 241, 0.75);
+    background: rgba(224, 231, 255, 0.55);
+}
+
+.quiz-option-item.correct {
+    border-color: rgba(34, 197, 94, 0.6);
+    background: rgba(34, 197, 94, 0.14);
+}
+
+.quiz-option-item.incorrect {
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(248, 113, 113, 0.14);
+}
+
+.quiz-option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: #1e293b;
+}
+
+.quiz-option-label input {
+    accent-color: #6366f1;
+}
+
+.quiz-option-text {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.quiz-option-letter {
+    font-weight: 600;
+    color: #4338ca;
+}
+
+.quiz-section-actions {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.6rem;
+}
+
+.quiz-submit-button {
+    border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    font-weight: 600;
+    padding: 0.55rem 1.15rem;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    justify-self: flex-start;
+}
+
+.quiz-submit-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 26px -18px rgba(99, 102, 241, 0.65);
+}
+
+.quiz-submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.quiz-section-hint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.quiz-summary {
+    background: rgba(79, 70, 229, 0.12);
+    color: #4338ca;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+.quiz-feedback {
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    display: grid;
+    gap: 0.4rem;
+    border: 1px solid transparent;
+}
+
+.quiz-feedback.correct {
+    background: rgba(34, 197, 94, 0.14);
+    color: #166534;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.quiz-feedback.incorrect {
+    background: rgba(248, 113, 113, 0.12);
+    color: #b91c1c;
+    border-color: rgba(248, 113, 113, 0.25);
+}
+
+.quiz-explanation {
+    margin: 0;
+    color: inherit;
+}
+
+.empty-quiz-options,
+.empty-quiz-compact {
+    font-size: 0.85rem;
+    color: #64748b;
+    padding: 0.85rem;
+    background: rgba(241, 245, 249, 0.85);
+    border-radius: 0.75rem;
+    border: 1px dashed rgba(148, 163, 184, 0.35);
 }
 
 /* Responsive Design for My Courses */

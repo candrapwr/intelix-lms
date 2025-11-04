@@ -18,6 +18,23 @@ const emptyMaterial = {
     file: null,
 };
 
+const MIN_QUIZ_OPTIONS = 2;
+const MAX_QUIZ_OPTIONS = 10;
+
+function createEmptyQuizForm() {
+    return {
+        question: '',
+        explanation: '',
+        sort_order: '',
+        options: [
+            { text: '', is_correct: true },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+        ],
+    };
+}
+
 const EditIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" width="20" height="20">
         <path d="M4 21h4l11-11-4-4L4 17v4z" strokeLinejoin="round" />
@@ -66,6 +83,29 @@ function normalizeSectionPayload(form) {
             form.sort_order === '' || Number.isNaN(Number(form.sort_order))
                 ? undefined
                 : Number(form.sort_order),
+    };
+}
+
+function normalizeQuizPayload(form) {
+    const options = form.options
+        .map((option) => ({
+            text: option.text?.trim() ?? '',
+            is_correct: option.is_correct === true,
+        }))
+        .filter((option) => option.text !== '');
+
+    return {
+        question: form.question.trim(),
+        explanation: form.explanation?.trim() ? form.explanation.trim() : undefined,
+        sort_order:
+            form.sort_order === '' || Number.isNaN(Number(form.sort_order))
+                ? undefined
+                : Number(form.sort_order),
+        options: options.map((option, index) => ({
+            label: String.fromCharCode(65 + index),
+            text: option.text,
+            is_correct: option.is_correct === true,
+        })),
     };
 }
 
@@ -124,6 +164,12 @@ export default function InstructorCoursesPage() {
     const [materialSection, setMaterialSection] = useState(null);
     const [editingMaterial, setEditingMaterial] = useState(null);
     const [savingMaterial, setSavingMaterial] = useState(false);
+
+    const [quizModalOpen, setQuizModalOpen] = useState(false);
+    const [quizForm, setQuizForm] = useState(() => createEmptyQuizForm());
+    const [quizSection, setQuizSection] = useState(null);
+    const [editingQuiz, setEditingQuiz] = useState(null);
+    const [savingQuiz, setSavingQuiz] = useState(false);
 
     const fetchCourses = useCallback(async () => {
         setLoading(true);
@@ -469,6 +515,204 @@ export default function InstructorCoursesPage() {
         }
     };
 
+    const handleOpenCreateQuiz = (section) => {
+        setQuizSection(section);
+        setEditingQuiz(null);
+        setQuizForm(createEmptyQuizForm());
+        setQuizModalOpen(true);
+    };
+
+    const handleOpenEditQuiz = (section, quiz) => {
+        const filledOptions = (quiz.options ?? []).map((option) => ({
+            text: option.text ?? '',
+            is_correct: option.is_correct ?? false,
+        }));
+
+        while (filledOptions.length < MIN_QUIZ_OPTIONS) {
+            filledOptions.push({ text: '', is_correct: false });
+        }
+
+        setQuizSection(section);
+        setEditingQuiz(quiz);
+        setQuizForm({
+            question: quiz.question ?? '',
+            explanation: quiz.explanation ?? '',
+            sort_order:
+                quiz.sort_order === null || quiz.sort_order === undefined ? '' : quiz.sort_order,
+            options: filledOptions,
+        });
+        setQuizModalOpen(true);
+    };
+
+    const handleQuizInputChange = (event) => {
+        const { name, value } = event.target;
+        setQuizForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleQuizOptionChange = (index, value) => {
+        setQuizForm((prev) => ({
+            ...prev,
+            options: prev.options.map((option, optionIndex) =>
+                optionIndex === index
+                    ? {
+                          ...option,
+                          text: value,
+                      }
+                    : option,
+            ),
+        }));
+    };
+
+    const handleSetCorrectQuizOption = (index) => {
+        setQuizForm((prev) => ({
+            ...prev,
+            options: prev.options.map((option, optionIndex) => ({
+                ...option,
+                is_correct: optionIndex === index,
+            })),
+        }));
+    };
+
+    const handleAddQuizOption = () => {
+        if (quizForm.options.length >= MAX_QUIZ_OPTIONS) {
+            pushError(
+                'Maksimal pilihan tercapai',
+                `Setiap kuis maksimal memiliki ${MAX_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        setQuizForm((prev) => ({
+            ...prev,
+            options: [...prev.options, { text: '', is_correct: false }],
+        }));
+    };
+
+    const handleRemoveQuizOption = (index) => {
+        if (quizForm.options.length <= MIN_QUIZ_OPTIONS) {
+            pushError(
+                'Minimal pilihan',
+                `Setiap kuis membutuhkan minimal ${MIN_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        setQuizForm((prev) => ({
+            ...prev,
+            options: prev.options.filter((_, optionIndex) => optionIndex !== index),
+        }));
+    };
+
+    const closeQuizModal = () => {
+        setQuizModalOpen(false);
+        setQuizSection(null);
+        setEditingQuiz(null);
+        setQuizForm(createEmptyQuizForm());
+        setSavingQuiz(false);
+    };
+
+    const handleSaveQuiz = async (event) => {
+        event.preventDefault();
+
+        if (!quizSection) {
+            pushError('Section tidak ditemukan', 'Pilih section terlebih dahulu sebelum menyimpan kuis.');
+            return;
+        }
+
+        if (!quizForm.question.trim()) {
+            pushError('Pertanyaan wajib diisi', 'Tuliskan pertanyaan kuis sebelum menyimpan.');
+            return;
+        }
+
+        const payload = normalizeQuizPayload(quizForm);
+
+        if (payload.options.length < MIN_QUIZ_OPTIONS) {
+            pushError(
+                'Pilihan belum lengkap',
+                `Minimal terdapat ${MIN_QUIZ_OPTIONS} pilihan jawaban.`,
+            );
+            return;
+        }
+
+        if (!payload.options.some((option) => option.is_correct)) {
+            pushError('Belum ada kunci jawaban', 'Tandai salah satu pilihan sebagai jawaban benar.');
+            return;
+        }
+
+        setSavingQuiz(true);
+
+        try {
+            if (editingQuiz) {
+                await instructorClient.patch(`/quizzes/${editingQuiz.id}`, payload);
+                pushSuccess('Kuis diperbarui', 'Kuis berhasil diperbarui.');
+            } else {
+                await instructorClient.post(`/sections/${quizSection.id}/quizzes`, payload);
+                pushSuccess('Kuis dibuat', 'Kuis baru berhasil ditambahkan.');
+            }
+
+            closeQuizModal();
+
+            const detail = await fetchCourseDetail(activeSlug, false);
+            if (detail) {
+                setCourses((prev) =>
+                    prev.map((course) =>
+                        course.slug === detail.slug
+                            ? {
+                                  ...course,
+                                  sections_count: detail.sections?.length ?? course.sections_count,
+                                  updated_at: detail.updated_at,
+                              }
+                            : course,
+                    ),
+                );
+            }
+        } catch (error) {
+            pushError('Gagal menyimpan kuis', error.response?.data?.message ?? error.message);
+        } finally {
+            setSavingQuiz(false);
+        }
+    };
+
+    const handleDeleteQuiz = async (quiz) => {
+        const result = await Swal.fire({
+            title: 'Hapus kuis?',
+            text: `Kuis "${quiz.question}" akan dihapus permanen.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Hapus',
+            cancelButtonText: 'Batal',
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await instructorClient.delete(`/quizzes/${quiz.id}`);
+            pushSuccess('Kuis dihapus', 'Kuis berhasil dihapus.');
+
+            const detail = await fetchCourseDetail(activeSlug, false);
+            if (detail) {
+                setCourses((prev) =>
+                    prev.map((course) =>
+                        course.slug === detail.slug
+                            ? {
+                                  ...course,
+                                  sections_count: detail.sections?.length ?? course.sections_count,
+                                  updated_at: detail.updated_at,
+                              }
+                            : course,
+                    ),
+                );
+            }
+        } catch (error) {
+            pushError('Gagal menghapus kuis', error.response?.data?.message ?? error.message);
+        }
+    };
+
     return (
         <div className="instructor-dashboard">
             <section className="instructor-hero-card">
@@ -648,6 +892,13 @@ export default function InstructorCoursesPage() {
                                                 >
                                                     <PlusIcon /> Materi
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    className="ghost-button"
+                                                    onClick={() => handleOpenCreateQuiz(section)}
+                                                >
+                                                    <PlusIcon /> Kuis
+                                                </button>
                                             </div>
 
                                             {section.materials?.length ? (
@@ -706,6 +957,139 @@ export default function InstructorCoursesPage() {
                                                     Belum ada materi pada section ini.
                                                 </div>
                                             )}
+                                            <div style={{ marginTop: '1rem', display: 'grid', gap: '0.6rem' }}>
+                                                <div style={{ fontWeight: 600, color: '#0f172a' }}>Kuis</div>
+                                                {section.quizzes?.length ? (
+                                                    <div style={{ display: 'grid', gap: '0.6rem' }}>
+                                                        {section.quizzes.map((quiz, quizIndex) => (
+                                                            <div
+                                                                key={quiz.id}
+                                                                style={{
+                                                                    display: 'grid',
+                                                                    gap: '0.5rem',
+                                                                    padding: '0.85rem 1rem',
+                                                                    borderRadius: '0.8rem',
+                                                                    border: '1px solid rgba(148, 163, 184, 0.25)',
+                                                                    background: 'rgba(248, 250, 252, 0.9)',
+                                                                }}
+                                                            >
+                                                                <div
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'flex-start',
+                                                                        gap: '0.8rem',
+                                                                    }}
+                                                                >
+                                                                    <div style={{ display: 'grid', gap: '0.35rem' }}>
+                                                                        <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                                                                            {`Kuis ${quizIndex + 1}`}
+                                                                            {quiz.sort_order !== null &&
+                                                                            quiz.sort_order !== undefined ? (
+                                                                                <span
+                                                                                    className="status-pill"
+                                                                                    style={{
+                                                                                        marginLeft: '0.5rem',
+                                                                                        background: 'rgba(14, 165, 233, 0.12)',
+                                                                                        color: '#0369a1',
+                                                                                    }}
+                                                                                >
+                                                                                    Urutan {quiz.sort_order}
+                                                                                </span>
+                                                                            ) : null}
+                                                                        </div>
+                                                                        <div style={{ color: '#1e293b' }}>{quiz.question}</div>
+                                                                    </div>
+                                                                    <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="icon-button"
+                                                                            onClick={() => handleOpenEditQuiz(section, quiz)}
+                                                                            aria-label="Edit kuis"
+                                                                        >
+                                                                            <EditIcon />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="icon-button danger"
+                                                                            onClick={() => handleDeleteQuiz(quiz)}
+                                                                            aria-label="Hapus kuis"
+                                                                        >
+                                                                            <DeleteIcon />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <ul
+                                                                    style={{
+                                                                        listStyle: 'none',
+                                                                        margin: 0,
+                                                                        padding: 0,
+                                                                        display: 'grid',
+                                                                        gap: '0.35rem',
+                                                                    }}
+                                                                >
+                                                                    {quiz.options?.length ? (
+                                                                        quiz.options.map((option, optionIndex) => (
+                                                                            <li
+                                                                                key={option.id ?? optionIndex}
+                                                                                style={{
+                                                                                    display: 'flex',
+                                                                                    justifyContent: 'space-between',
+                                                                                    alignItems: 'center',
+                                                                                    gap: '0.6rem',
+                                                                                    padding: '0.4rem 0.55rem',
+                                                                                    borderRadius: '0.6rem',
+                                                                                    background: option.is_correct
+                                                                                        ? 'rgba(34, 197, 94, 0.12)'
+                                                                                        : 'rgba(241, 245, 249, 0.8)',
+                                                                                }}
+                                                                            >
+                                                                                <div
+                                                                                    style={{
+                                                                                        display: 'flex',
+                                                                                        alignItems: 'center',
+                                                                                        gap: '0.45rem',
+                                                                                        color: '#0f172a',
+                                                                                    }}
+                                                                                >
+                                                                                    <span style={{ fontWeight: 600 }}>
+                                                                                        {String.fromCharCode(65 + optionIndex)}.
+                                                                                    </span>
+                                                                                    <span>{option.text}</span>
+                                                                                </div>
+                                                                                {option.is_correct ? (
+                                                                                    <span
+                                                                                        style={{
+                                                                                            fontSize: '0.75rem',
+                                                                                            fontWeight: 600,
+                                                                                            color: '#15803d',
+                                                                                        }}
+                                                                                    >
+                                                                                        Benar
+                                                                                    </span>
+                                                                                ) : null}
+                                                                            </li>
+                                                                        ))
+                                                                    ) : (
+                                                                        <li style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                                            Belum ada pilihan jawaban.
+                                                                        </li>
+                                                                    )}
+                                                                </ul>
+                                                                {quiz.explanation ? (
+                                                                    <div style={{ fontSize: '0.78rem', color: '#475569' }}>
+                                                                        Catatan: {quiz.explanation}
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ fontSize: '0.82rem', color: '#64748b', fontStyle: 'italic' }}>
+                                                        Belum ada kuis pada section ini.
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -878,6 +1262,165 @@ export default function InstructorCoursesPage() {
                         <span className="field-hint">
                             Format populer seperti PDF, PPT, MP4, MP3, atau ZIP hingga 500MB.
                         </span>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal
+                open={quizModalOpen}
+                title={editingQuiz ? 'Perbarui Kuis' : 'Kuis Baru'}
+                description={
+                    editingQuiz
+                        ? 'Perbarui pertanyaan dan pilihan jawaban untuk menjaga kualitas evaluasi.'
+                        : 'Tambahkan kuis pilihan ganda guna menguji pemahaman peserta.'
+                }
+                onClose={closeQuizModal}
+                footer={
+                    <>
+                        <button type="button" className="ghost-button" onClick={closeQuizModal}>
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            form="quiz-form"
+                            className="primary-button"
+                            disabled={savingQuiz}
+                        >
+                            {savingQuiz ? 'Menyimpan...' : 'Simpan Kuis'}
+                        </button>
+                    </>
+                }
+            >
+                <form id="quiz-form" className="form-grid instructor-modal-form" onSubmit={handleSaveQuiz}>
+                    <div className="form-field">
+                        <label htmlFor="quiz_question">Pertanyaan</label>
+                        <textarea
+                            id="quiz_question"
+                            name="question"
+                            value={quizForm.question}
+                            onChange={handleQuizInputChange}
+                            placeholder="Tuliskan pertanyaan pilihan ganda"
+                            rows={3}
+                            required
+                        />
+                        <span className="field-hint">Gunakan kalimat singkat, padat, dan jelas.</span>
+                    </div>
+
+                    <div className="form-field">
+                        <label htmlFor="quiz_explanation">Penjelasan (opsional)</label>
+                        <textarea
+                            id="quiz_explanation"
+                            name="explanation"
+                            value={quizForm.explanation}
+                            onChange={handleQuizInputChange}
+                            placeholder="Tambahkan pembahasan singkat setelah peserta menjawab."
+                            rows={2}
+                        />
+                    </div>
+
+                    <div className="form-field">
+                        <label htmlFor="quiz_sort_order">Urutan (opsional)</label>
+                        <input
+                            id="quiz_sort_order"
+                            name="sort_order"
+                            type="number"
+                            min="0"
+                            value={quizForm.sort_order}
+                            onChange={handleQuizInputChange}
+                            placeholder="Kosongkan bila ingin mengikuti urutan otomatis"
+                        />
+                    </div>
+
+                    <div style={{ display: 'grid', gap: '0.85rem' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '0.6rem',
+                            }}
+                        >
+                            <strong style={{ color: '#0f172a' }}>Pilihan Jawaban</strong>
+                            <button
+                                type="button"
+                                className="ghost-button"
+                                onClick={handleAddQuizOption}
+                                disabled={quizForm.options.length >= MAX_QUIZ_OPTIONS}
+                            >
+                                Tambah Pilihan
+                            </button>
+                        </div>
+
+                        {quizForm.options.map((option, index) => {
+                            const label = String.fromCharCode(65 + index);
+                            return (
+                                <div
+                                    key={index}
+                                    style={{
+                                        border: '1px solid rgba(148, 163, 184, 0.3)',
+                                        borderRadius: '0.9rem',
+                                        padding: '0.85rem',
+                                        display: 'grid',
+                                        gap: '0.55rem',
+                                        background: 'rgba(248, 250, 252, 0.9)',
+                                    }}
+                                >
+                                    <div className="form-field" style={{ marginBottom: 0 }}>
+                                        <label htmlFor={`quiz_option_${index}`}>Pilihan {label}</label>
+                                        <input
+                                            id={`quiz_option_${index}`}
+                                            value={option.text}
+                                            onChange={(event) => handleQuizOptionChange(index, event.target.value)}
+                                            placeholder={`Jawaban ${label}`}
+                                            required
+                                        />
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            flexWrap: 'wrap',
+                                            gap: '0.6rem',
+                                        }}
+                                    >
+                                        <label
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.35rem',
+                                                fontSize: '0.85rem',
+                                                color: '#0f172a',
+                                            }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="quiz-correct"
+                                                checked={option.is_correct}
+                                                onChange={() => handleSetCorrectQuizOption(index)}
+                                            />
+                                            <span>Tandai sebagai jawaban benar</span>
+                                        </label>
+                                        {quizForm.options.length > MIN_QUIZ_OPTIONS ? (
+                                            <button
+                                                type="button"
+                                                className="ghost-button"
+                                                style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem' }}
+                                                onClick={() => handleRemoveQuizOption(index)}
+                                            >
+                                                Hapus
+                                            </button>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            Minimal {MIN_QUIZ_OPTIONS} pilihan dan maksimal {MAX_QUIZ_OPTIONS}. Pastikan satu pilihan
+                            ditandai sebagai jawaban benar.
+                        </p>
                     </div>
                 </form>
             </Modal>

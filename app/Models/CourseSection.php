@@ -27,4 +27,14 @@ class CourseSection extends Model
     {
         return $this->hasMany(CourseMaterial::class)->orderBy('sort_order')->orderBy('created_at');
     }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(CourseQuiz::class)->orderBy('sort_order')->orderBy('created_at');
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(CourseQuizAttempt::class);
+    }
 }
