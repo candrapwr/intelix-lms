@@ -1,4 +1,26 @@
-# INTELIX LMS (Laravel 12 + PostgreSQL + React Admin)
+<div align="center">
+
+# 🎓 INTELIX LMS
+
+**Platform pembelajaran intelijen terpadu — Laravel 12 + PostgreSQL + React Admin SPA.**
+
+Menyatukan API backend Laravel, Postgres sebagai basis data utama, dan SPA admin berbasis React (Vite). Pusat pelatihan intelijen digital untuk agen aktif, calon agen, dan analis.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com/)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![React](https://img.shields.io/badge/React-18_SPA-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-bundler-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#)
+[![Status](https://img.shields.io/badge/status-aktif_maintained-success.svg)](#)
+[![Stars](https://img.shields.io/github/stars/candrapwr/intelix-lms?style=social&label=Star)](https://github.com/candrapwr/intelix-lms/stargazers)
+
+</div>
+
+---
+
+> 🌐 Bagian dari **Ekosistem Siber** — dibangun & dirawat oleh **dataSiberLab**.
 
 INTELIX adalah platform pembelajaran intelijen terpadu yang menyatukan API backend Laravel, Postgres sebagai basis data utama, dan SPA admin berbasis React (Vite). Sistem ini dirancang sebagai pusat resmi pelatihan intelijen digital untuk agen aktif, calon agen, serta analis agar mampu mengasah keterampilan operasional, analitik, dan koordinasi misi secara terukur.
 
@@ -309,3 +331,24 @@ php artisan test
 ---
 
 Selamat melanjutkan pengembangan LMS! Dokumentasi ini diharapkan mempermudah onboarding tim, mempercepat debugging, dan menjaga konsistensi arsitektur ke depan.
+
+---
+
+## 📄 Lisensi
+
+Dirilis di bawah **Lisensi MIT**. Lihat [LICENSE](./LICENSE). Bebas dipakai, dimodifikasi, dan didistribusikan — termasuk komersial.
+
+---
+
+## 📬 Kontak & Komunitas
+
+<div align="center">
+
+**Dibuat dengan ❤️ oleh [dataSiberLab](https://datasiber.com)** sebagai bagian dari ekosistem Siber.
+
+📧 **Kontak:** [candrapwr@datasiber.com](mailto:candrapwr@datasiber.com)
+🌐 **Website:** [datasiber.com](https://datasiber.com)
+
+INTELIX LMS berguna? ⭐ Star repo-nya!
+
+</div>
